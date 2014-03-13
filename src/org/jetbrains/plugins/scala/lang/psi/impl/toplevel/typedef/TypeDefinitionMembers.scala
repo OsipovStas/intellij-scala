@@ -20,13 +20,14 @@ import reflect.NameTransformer
 import com.intellij.openapi.diagnostic.Logger
 import types._
 import caches.CachesUtil
-import lang.resolve.processor.{ImplicitProcessor, BaseProcessor}
+import lang.resolve.processor.BaseProcessor
 import psi.ScalaPsiUtil.convertMemberName
 import api.toplevel.{ScNamedElement, ScModifierListOwner, ScTypedDefinition}
 import api.base.{ScAccessModifier, ScFieldId, ScPrimaryConstructor}
 import extensions.toPsiNamedElementExt
 import caches.CachesUtil.MyOptionalProvider
-import api.ScalaFile
+import org.jetbrains.plugins.scala.lang.psi.api.annotations.MacroAnnotations
+import com.intellij.openapi
 
 /**
  * @author ven
@@ -388,10 +389,14 @@ object TypeDefinitionMembers {
                 case s: ScAnnotationsHolder =>
                   val beanProperty = ScalaPsiUtil.isBeanProperty(s, noResolve = true)
                   val booleanBeanProperty = ScalaPsiUtil.isBooleanBeanProperty(s, noResolve = true)
+                  val fakeProperty: Boolean = MacroAnnotations.isFakeProperty(s)
                   if (beanProperty) {
                     addSignature(new Signature("get" + dcl.name.capitalize, Stream.empty, 0, subst, Some(dcl)))
                   } else if (booleanBeanProperty) {
                     addSignature(new Signature("is" + dcl.name.capitalize, Stream.empty, 0, subst, Some(dcl)))
+                  }
+                  if(fakeProperty) {
+                    addSignature(MacroAnnotations.getFakeSignature(dcl, subst))
                   }
                 case _ =>
               }
@@ -727,6 +732,11 @@ object TypeDefinitionMembers {
       }
     }
 
+    def checkFake(s: String): Boolean = {
+      val decoded: String = "fake" + NameTransformer.decode(s).capitalize
+      openapi.util.text.StringUtil.equals(decoded, decodedName)
+    }
+
     val processVals = shouldProcessVals(processor)
     val processMethods = shouldProcessMethods(processor)
     val processValsForScala = isScalaProcessor && processVals
@@ -790,6 +800,20 @@ object TypeDefinitionMembers {
                       if (!process(beanMethodsIterator.next())) return false
                     }
                   }
+                case _ =>
+              }
+            }
+
+            if (checkFake(elem.name)) {
+              elem match {
+                case t: ScTypedDefinition =>
+                  def process(method: PsiMethod): Boolean = {
+                    if (processValsForScala &&
+                            !processor.execute(method,
+                              state.put(ScSubstitutor.key, n.substitutor followed subst))) return false
+                    true
+                  }
+                  if (decodedName.startsWith("fake") && !process(MacroAnnotations.getFakeMethod(t))) return false
                 case _ =>
               }
             }

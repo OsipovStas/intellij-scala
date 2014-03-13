@@ -15,6 +15,7 @@ import com.intellij.psi.{PsiElement, PsiClass, PsiMethod}
 import com.intellij.util.containers.ConcurrentHashMap
 import light.{PsiClassWrapper, StaticPsiTypedDefinitionWrapper, PsiTypedDefinitionWrapper}
 import extensions.toSeqExt
+import org.jetbrains.plugins.scala.lang.psi.api.annotations.MacroAnnotations
 
 /**
  * Member definitions, classes, named patterns which have types
@@ -51,6 +52,14 @@ trait ScTypedDefinition extends ScNamedElement with TypingContextOwner {
   @volatile
   private var underEqualsModCount: Long = 0L
 
+  @volatile
+  private var fakeMethodsCache: Seq[PsiMethod] = null
+  @volatile
+  private var fakeModCount: Long = 0L
+
+
+
+
   def getUnderEqualsMethod: PsiMethod = {
     def inner(): PsiMethod = {
       val hasModifierProperty: String => Boolean = nameContext match {
@@ -78,8 +87,9 @@ trait ScTypedDefinition extends ScNamedElement with TypingContextOwner {
         case v: ScModifierListOwner => v.hasModifierProperty _
         case _ => _ => false
       }
+      val tType: ScType = this.getType(TypingContext.empty).getOrAny
       new FakePsiMethod(this, "get" + StringUtil.capitalize(this.name), Array.empty,
-        this.getType(TypingContext.empty).getOrAny, hasModifierProperty)
+        tType, hasModifierProperty)
     }
 
     val curModCount = getManager.getModificationTracker.getOutOfCodeBlockModificationCount
@@ -160,9 +170,18 @@ trait ScTypedDefinition extends ScNamedElement with TypingContextOwner {
     
     val curModCount = getManager.getModificationTracker.getOutOfCodeBlockModificationCount
     if (beanMethodsCache != null && modCount == curModCount) return beanMethodsCache
-    val res = getBeanMethodsInner(this)
+    val res = getBeanMethodsInner(this) ++ getFakeMethods
     modCount = curModCount
     beanMethodsCache = res
+    res
+  }
+
+  def getFakeMethods: Seq[PsiMethod] = {
+    val curModCount = getManager.getModificationTracker.getOutOfCodeBlockModificationCount
+    if (fakeMethodsCache != null && fakeModCount == curModCount) return fakeMethodsCache
+    val res = MacroAnnotations.getFakeMethods(this)
+    fakeModCount = curModCount
+    fakeMethodsCache = res
     res
   }
 
