@@ -27,7 +27,6 @@ import api.base.{ScAccessModifier, ScFieldId, ScPrimaryConstructor}
 import extensions.toPsiNamedElementExt
 import caches.CachesUtil.MyOptionalProvider
 import org.jetbrains.plugins.scala.lang.psi.api.annotations.MacroAnnotations
-import com.intellij.openapi
 
 /**
  * @author ven
@@ -132,46 +131,25 @@ object TypeDefinitionMembers {
           case _var: ScVariable if isBridge(place, _var) =>
             for (dcl <- _var.declaredElements) {
               addSignature(new Signature(dcl.name, Stream.empty, 0, subst, Some(dcl)))
-              dcl.nameContext match {
-                case s: ScAnnotationsHolder =>
-                  val beanProperty = ScalaPsiUtil.isBeanProperty(s, noResolve = true)
-                  val booleanBeanProperty = ScalaPsiUtil.isBooleanBeanProperty(s, noResolve = true)
-                  if (beanProperty) {
-                    addSignature(new Signature("get" + dcl.name.capitalize, Stream.empty, 0, subst, Some(dcl)))
-                  } else if (booleanBeanProperty) {
-                    addSignature(new Signature("is" + dcl.name.capitalize, Stream.empty, 0, subst, Some(dcl)))
-                  }
-                case _ =>
+              MacroAnnotations.getSyntheticCreatorsFor(dcl, noResolve = true).foreach {
+                case creator => addSignature(creator.createSignature(dcl, subst))
               }
             }
           case _val: ScValue if isBridge(place, _val) =>
             for (dcl <- _val.declaredElements) {
               addSignature(new Signature(dcl.name, Stream.empty, 0, subst, Some(dcl)))
-              dcl.nameContext match {
-                case s: ScAnnotationsHolder =>
-                  val beanProperty = ScalaPsiUtil.isBeanProperty(s, noResolve = true)
-                  val booleanBeanProperty = ScalaPsiUtil.isBooleanBeanProperty(s, noResolve = true)
-                  if (beanProperty) {
-                    addSignature(new Signature("get" + dcl.name.capitalize, Stream.empty, 0, subst, Some(dcl)))
-                  } else if (booleanBeanProperty) {
-                    addSignature(new Signature("is" + dcl.name.capitalize, Stream.empty, 0, subst, Some(dcl)))
-                  }
-                case _ =>
+              MacroAnnotations.getSyntheticCreatorsFor(dcl, noResolve = true).foreach {
+                case creator => addSignature(creator.createSignature(dcl, subst))
               }
             }
-          case constr: ScPrimaryConstructor => {
+          case constr: ScPrimaryConstructor =>
             val parameters = constr.parameters
             for (param <- parameters if isBridge(place, param)) {
-               addSignature(new Signature(param.name, Stream.empty, 0, subst, Some(param)))
-              val beanProperty = ScalaPsiUtil.isBeanProperty(param, noResolve = true)
-              val booleanBeanProperty = ScalaPsiUtil.isBooleanBeanProperty(param, noResolve = true)
-              if (beanProperty) {
-                addSignature(new Signature("get" + param.name.capitalize, Stream.empty, 0, subst, Some(param)))
-              } else if (booleanBeanProperty) {
-                addSignature(new Signature("is" + param.name.capitalize, Stream.empty, 0, subst, Some(param)))
+              addSignature(new Signature(param.name, Stream.empty, 0, subst, Some(param)))
+              MacroAnnotations.getSyntheticCreatorsFor(param, noResolve = true).foreach {
+                case creator => addSignature(creator.createSignature(param, subst))
               }
             }
-          }
           case f: ScFunction if isBridge(place, f) && !f.isConstructor && f.parameters.length == 0 =>
             addSignature(new PhysicalSignature(f, subst))
           case c: ScClass if c.isCase && c.fakeCompanionModule != None && isBridge(place, c) =>
@@ -366,39 +344,15 @@ object TypeDefinitionMembers {
               lazy val t = dcl.getType(TypingContext.empty).getOrAny
               addSignature(new Signature(dcl.name, Stream.empty, 0, subst, Some(dcl)))
               addSignature(new Signature(dcl.name + "_=", ScalaPsiUtil.getSingletonStream(t), 1, subst, Some(dcl)))
-              dcl.nameContext match {
-                case s: ScAnnotationsHolder =>
-                  val beanProperty = ScalaPsiUtil.isBeanProperty(s, noResolve = true)
-                  val booleanBeanProperty = ScalaPsiUtil.isBooleanBeanProperty(s, noResolve = true)
-                  if (beanProperty) {
-                    addSignature(new Signature("get" + dcl.name.capitalize, Stream.empty, 0, subst, Some(dcl)))
-                  } else if (booleanBeanProperty) {
-                    addSignature(new Signature("is" + dcl.name.capitalize, Stream.empty, 0, subst, Some(dcl)))
-                  }
-                  if (beanProperty || booleanBeanProperty) {
-                    addSignature(new Signature("set" + dcl.name.capitalize, ScalaPsiUtil.getSingletonStream(t), 1,
-                      subst, Some(dcl)))
-                  }
-                case _ =>
+              MacroAnnotations.getSyntheticCreatorsFor(dcl, noResolve = true).foreach {
+                case creator => addSignature(creator.createSignature(dcl, subst))
               }
             }
           case _val: ScValue if isBridge(place, _val) =>
             for (dcl <- _val.declaredElements) {
               addSignature(new Signature(dcl.name, Stream.empty, 0, subst, Some(dcl)))
-              dcl.nameContext match {
-                case s: ScAnnotationsHolder =>
-                  val beanProperty = ScalaPsiUtil.isBeanProperty(s, noResolve = true)
-                  val booleanBeanProperty = ScalaPsiUtil.isBooleanBeanProperty(s, noResolve = true)
-                  val fakeProperty: Boolean = MacroAnnotations.isFakeProperty(s)
-                  if (beanProperty) {
-                    addSignature(new Signature("get" + dcl.name.capitalize, Stream.empty, 0, subst, Some(dcl)))
-                  } else if (booleanBeanProperty) {
-                    addSignature(new Signature("is" + dcl.name.capitalize, Stream.empty, 0, subst, Some(dcl)))
-                  }
-                  if(fakeProperty) {
-                    addSignature(MacroAnnotations.getFakeSignature(dcl, subst))
-                  }
-                case _ =>
+              MacroAnnotations.getSyntheticCreatorsFor(dcl, noResolve = true).foreach {
+                case creator => addSignature(creator.createSignature(dcl, subst))
               }
             }
           case constr: ScPrimaryConstructor => {
@@ -408,20 +362,8 @@ object TypeDefinitionMembers {
               addSignature(new Signature(param.name, Stream.empty, 0, subst, Some(param)))
               if (!param.isStable) addSignature(new Signature(param.name + "_=", ScalaPsiUtil.getSingletonStream(t), 1, subst,
                 Some(param)))
-              val beanProperty = ScalaPsiUtil.isBeanProperty(param, noResolve = true)
-              val booleanBeanProperty = ScalaPsiUtil.isBooleanBeanProperty(param, noResolve = true)
-              if (beanProperty) {
-                addSignature(new Signature("get" + param.name.capitalize, Stream.empty, 0, subst, Some(param)))
-                if (!param.isStable) {
-                  addSignature(new Signature("set" + param.name.capitalize, ScalaPsiUtil.getSingletonStream(t), 1,
-                    subst, Some(param)))
-                }
-              } else if (booleanBeanProperty) {
-                addSignature(new Signature("is" + param.name.capitalize, Stream.empty, 0, subst, Some(param)))
-                if (!param.isStable) {
-                  addSignature(new Signature("set" + param.name.capitalize, ScalaPsiUtil.getSingletonStream(t), 1,
-                    subst, Some(param)))
-                }
+              MacroAnnotations.getSyntheticCreatorsFor(param, noResolve = true).foreach {
+                case creator => addSignature(creator.createSignature(param, subst))
               }
             }
           }
@@ -495,7 +437,6 @@ object TypeDefinitionMembers {
   val parameterlessKey: Key[CachedValue[PMap]] = Key.create("parameterless key")
 
   import CachesUtil.get
-  import CachesUtil.MyProvider
   import PsiModificationTracker.{OUT_OF_CODE_BLOCK_MODIFICATION_COUNT => dep_item}
 
   def getParameterlessSignatures(clazz: PsiClass): PMap = {
@@ -723,6 +664,7 @@ object TypeDefinitionMembers {
       if (name == null || name == "") true
       else convertMemberName(s) == decodedName
     }
+
     def checkNameGetSetIs(s: String): Boolean = {
       if (name == null || name == "") true
       else {
@@ -730,11 +672,6 @@ object TypeDefinitionMembers {
         val beanPropertyNames = Seq("is", "get", "set").map(_ + decoded.capitalize)
         beanPropertyNames.contains(decodedName)
       }
-    }
-
-    def checkFake(s: String): Boolean = {
-      val decoded: String = "fake" + NameTransformer.decode(s).capitalize
-      openapi.util.text.StringUtil.equals(decoded, decodedName)
     }
 
     val processVals = shouldProcessVals(processor)
@@ -790,12 +727,16 @@ object TypeDefinitionMembers {
                         state.put(ScSubstitutor.key, n.substitutor followed subst))) return false
                     true
                   }
+//                  MacroAnnotations.getSuitableCreator(NameTransformer.decode(elem.getName), decodedName).foreach {
+//                    case creator if !process(creator.createMember(t)) => return false
+//                    case _ =>
+//                  }
                   if (decodedName.startsWith("set") && !process(t.getSetBeanMethod)) return false
                   if (decodedName.startsWith("get") && !process(t.getGetBeanMethod)) return false
                   if (decodedName.startsWith("is") && !process(t.getIsBeanMethod)) return false
                   if (decodedName.isEmpty) {
                     //completion processor    a
-                    val beanMethodsIterator = t.getBeanMethods.iterator
+                    val beanMethodsIterator = t.getSynthetics.iterator
                     while (beanMethodsIterator.hasNext) {
                       if (!process(beanMethodsIterator.next())) return false
                     }
@@ -804,19 +745,6 @@ object TypeDefinitionMembers {
               }
             }
 
-            if (checkFake(elem.name)) {
-              elem match {
-                case t: ScTypedDefinition =>
-                  def process(method: PsiMethod): Boolean = {
-                    if (processValsForScala &&
-                            !processor.execute(method,
-                              state.put(ScSubstitutor.key, n.substitutor followed subst))) return false
-                    true
-                  }
-                  if (decodedName.startsWith("fake") && !process(MacroAnnotations.getFakeMethod(t))) return false
-                case _ =>
-              }
-            }
             true
           }
           true

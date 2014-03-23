@@ -1,13 +1,11 @@
 package org.jetbrains.plugins.scala
 package lang.psi.api.annotations
 
-import org.jetbrains.plugins.scala.lang.psi.{ScalaPsiUtil, types, fake}
-import fake.FakePsiMethod
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.PsiMethod
-import org.jetbrains.plugins.scala.lang.psi.api.toplevel.{ScTypedDefinition, ScModifierListOwner, ScNamedElement}
-import org.jetbrains.plugins.scala.lang.psi.types.{ScSubstitutor, Signature}
-import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScVariable, ScValue, ScAnnotationsHolder}
+import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
+import com.intellij.psi.PsiNamedElement
+import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScNamedElement
+import org.jetbrains.plugins.scala.lang.psi.types.ScSubstitutor
+import org.jetbrains.plugins.scala.lang.psi.api.statements.ScAnnotationsHolder
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScClassParameter
 
 /**
@@ -17,36 +15,26 @@ import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScClassParamet
  */
 object MacroAnnotations {
 
-  def isFakeProperty(s: ScAnnotationsHolder): Boolean = {
-    s.annotations.exists {
-      case annot => StringUtil.containsIgnoreCase(annot.typeElement.getText, "fake")
+
+  def getSyntheticCreatorsFor(definition: PsiNamedElement, noResolve: Boolean = false) = {
+    generators.flatMap {
+      case gen => gen.getCreatorsFor(definition, noResolve)
     }
   }
 
-  
-  def getFakeMethod(x: ScNamedElement): PsiMethod = {
-    val hasModifierProperty: String => Boolean = ScalaPsiUtil.nameContext(x) match {
-      case v: ScModifierListOwner => v.hasModifierProperty
-      case _ => _ => false
+  def hasSuitableCreator(baseName: String, decodedName: String) = {
+    generators.exists {
+      case gen => gen.hasSuitableCreator(baseName, decodedName)
     }
-    new FakePsiMethod(x, "fake" + StringUtil.capitalize(x.name), Array.empty, types.Boolean, hasModifierProperty)
   }
 
-  def getFakeMethods(s: ScTypedDefinition): Seq[PsiMethod] = {
-    def fakeSeq(v: ScAnnotationsHolder with ScModifierListOwner): Seq[PsiMethod] = {
-      val fakeProperty: Boolean = isFakeProperty(v)
-      if (fakeProperty) {
-        Seq(MacroAnnotations.getFakeMethod(s))
-      } else Seq.empty
-    }
-    ScalaPsiUtil.nameContext(s) match {
-      case v: ScValue =>
-        fakeSeq(v)
-      case _ => Seq.empty
-    }
+  def getSuitableCreator(baseName: String, decodedName: String) = {
+    generators.flatMap {
+      case gen => gen.findSuitableCreators(baseName, decodedName)
+    }.headOption
   }
-  
-  
-  def getFakeSignature(dcl: ScTypedDefinition, subst: ScSubstitutor): Signature = new Signature("fake" + dcl.name.capitalize, Stream.empty, 0, subst, Some(dcl))
+
+
+  val generators: Seq[Generator] = Seq(BeanGenerator)
 
 }
