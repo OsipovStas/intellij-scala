@@ -1,76 +1,25 @@
 package org.jetbrains.plugins.scala
-package lang.psi.api.annotations
+package lang.psi.api.annotations.beans
 
-import com.intellij.psi.{PsiNamedElement, PsiMethod}
+import org.jetbrains.plugins.scala.lang.psi.api.annotations.{MacroGenerator, SyntheticMemberCreator}
+import com.intellij.psi.{PsiMethod, PsiNamedElement}
 import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScVariable, ScValue, ScAnnotationsHolder}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.{ScTypedDefinition, ScModifierListOwner}
 import org.jetbrains.plugins.scala.lang.psi.{types, ScalaPsiUtil}
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScClassParameter
-import org.jetbrains.plugins.scala.lang.psi.fake.FakePsiMethod
-import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.plugins.scala.lang.psi.types.result.TypingContext
-import org.jetbrains.plugins.scala.lang.psi.types.{Signature, ScSubstitutor, ScType}
-import org.jetbrains.plugins.scala.lang.psi.types.nonvalue.Parameter
-import extensions.toSeqExt
+import scala.Some
 import org.jetbrains.plugins.scala.lang.psi.light.PsiTypedDefinitionWrapper.DefinitionRole
 import org.jetbrains.plugins.scala.lang.psi.light.PsiTypedDefinitionWrapper.DefinitionRole.DefinitionRole
+import org.jetbrains.plugins.scala.lang.psi.types.{Signature, ScSubstitutor, ScType}
+import org.jetbrains.plugins.scala.lang.psi.types.result.TypingContext
+import org.jetbrains.plugins.scala.lang.psi.fake.FakePsiMethod
+import com.intellij.openapi.util.text.StringUtil
 
 /**
  * @author stasstels
- * @since  3/19/14.
+ * @since  3/24/14.
  */
-trait Generator {
-
-  def checkAnnotation(s: ScAnnotationsHolder, noResolve: Boolean = false): Boolean
-
-  def hasSuitableCreator(baseName: String, decodedName: String): Boolean = {
-    creators.exists {
-      case creator => StringUtil.equals(creator.transformedName(baseName), decodedName)
-    }
-  }
-
-  def findSuitableCreators(baseName: String, decodedName: String): Seq[SyntheticMemberCreator] = {
-    creators.filter {
-      case creator => StringUtil.equals(creator.transformedName(baseName), decodedName)
-    }
-  }
-
-
-  def getCreatorsFor(definition: PsiNamedElement, noResolve: Boolean = false): Seq[SyntheticMemberCreator]
-  
-
-  protected val creators: Seq[SyntheticMemberCreator]
-}
-
-trait SyntheticMemberCreator {
-
-  def transformedName(name: String): String
-
-  def checkName(name: String): Boolean
-
-  def createMember(definition: ScTypedDefinition): PsiMethod
-
-  def createSignature(definition: ScTypedDefinition, substitutor: ScSubstitutor): Signature
-
-  def getRole: DefinitionRole
-
-  def getKey: (Generator, Int)
-
-  def hasModifierProperty(definition: ScTypedDefinition): String => Boolean = ScalaPsiUtil.nameContext(definition) match {
-    case v: ScModifierListOwner => v.hasModifierProperty
-    case _ => _ => false
-  }
-
-  implicit def arr2arr(a: Array[ScType]): Array[Parameter] = a.toSeq.mapWithIndex {
-    case (tpe, index) => new Parameter("", None, tpe, false, false, false, index)
-  }.toArray
-
-
-}
-
-
-
-case object BeanGenerator extends Generator {
+case object BeanMacroGenerator extends MacroGenerator {
 
 
   override protected val creators: Seq[SyntheticMemberCreator] = Seq(GetterCreator, SetterCreator)
@@ -86,7 +35,7 @@ case object BeanGenerator extends Generator {
         Seq(GetterCreator, SetterCreator)
       } else Seq.empty
     }
-    
+
     ScalaPsiUtil.nameContext(definition) match {
       case v: ScValue =>
         valueSeq(v)
@@ -107,8 +56,6 @@ case object BeanGenerator extends Generator {
 
     override def getRole: DefinitionRole = DefinitionRole.GETTER
 
-    override def getKey: (Generator, Int) = (BeanGenerator, 0)
-
     override def createMember(definition: ScTypedDefinition): PsiMethod = {
       val tType: ScType = definition.getType(TypingContext.empty).getOrAny
       new FakePsiMethod(definition, transformedName(definition.name), Array.empty,
@@ -128,7 +75,6 @@ case object BeanGenerator extends Generator {
 
     override def getRole: DefinitionRole = DefinitionRole.SETTER
 
-    override def getKey: (Generator, Int) = (BeanGenerator, 1)
 
     override def createMember(definition: ScTypedDefinition): PsiMethod = {
       val tType = definition.getType(TypingContext.empty).getOrAny

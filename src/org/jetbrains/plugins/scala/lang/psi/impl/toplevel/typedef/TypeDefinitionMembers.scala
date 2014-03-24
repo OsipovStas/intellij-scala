@@ -27,6 +27,7 @@ import api.base.{ScAccessModifier, ScFieldId, ScPrimaryConstructor}
 import extensions.toPsiNamedElementExt
 import caches.CachesUtil.MyOptionalProvider
 import org.jetbrains.plugins.scala.lang.psi.api.annotations.MacroAnnotations
+import com.intellij.openapi
 
 /**
  * @author ven
@@ -665,12 +666,11 @@ object TypeDefinitionMembers {
       else convertMemberName(s) == decodedName
     }
 
-    def checkNameGetSetIs(s: String): Boolean = {
+    def checkSyntheticName(s: String): Boolean = {
       if (name == null || name == "") true
       else {
         val decoded = NameTransformer.decode(s)
-        val beanPropertyNames = Seq("is", "get", "set").map(_ + decoded.capitalize)
-        beanPropertyNames.contains(decodedName)
+        MacroAnnotations.hasSuitableCreator(decoded, decodedName)
       }
     }
 
@@ -689,7 +689,7 @@ object TypeDefinitionMembers {
           }
           elem match {
             case p: ScClassParameter if processValsForScala && !p.isVar && !p.isVal &&
-              (checkName(p.name) || checkNameGetSetIs(p.name)) && isScalaProcessor =>
+              (checkName(p.name) || checkSyntheticName(p.name)) && isScalaProcessor =>
               val clazz = PsiTreeUtil.getContextOfType(p, true, classOf[ScTemplateDefinition])
               if (clazz != null && clazz.isInstanceOf[ScClass] && !p.isEffectiveVal) {
                 //this is member only for class scope
@@ -718,7 +718,7 @@ object TypeDefinitionMembers {
               }
             }
 
-            if (checkNameGetSetIs(elem.name)) {
+            if (checkSyntheticName(elem.name)) {
               elem match {
                 case t: ScTypedDefinition =>
                   def process(method: PsiMethod): Boolean = {
@@ -727,18 +727,18 @@ object TypeDefinitionMembers {
                         state.put(ScSubstitutor.key, n.substitutor followed subst))) return false
                     true
                   }
-//                  MacroAnnotations.getSuitableCreator(NameTransformer.decode(elem.getName), decodedName).foreach {
-//                    case creator if !process(creator.createMember(t)) => return false
-//                    case _ =>
-//                  }
-                  if (decodedName.startsWith("set") && !process(t.getSetBeanMethod)) return false
-                  if (decodedName.startsWith("get") && !process(t.getGetBeanMethod)) return false
-                  if (decodedName.startsWith("is") && !process(t.getIsBeanMethod)) return false
+
+                  MacroAnnotations.getSyntheticCreatorsFor(elem).filter {
+                    case creator => openapi.util.text.StringUtil.equals(creator.transformedName(elem.getName), decodedName)
+                  } foreach {
+                    case creator if !process(t.getSyntheticMember(creator)) => return false
+                    case _ =>
+                  }
                   if (decodedName.isEmpty) {
                     //completion processor    a
-                    val beanMethodsIterator = t.getSynthetics.iterator
-                    while (beanMethodsIterator.hasNext) {
-                      if (!process(beanMethodsIterator.next())) return false
+                    t.getSynthetics.foreach {
+                      case method if !process(method) => return false
+                      case _ =>
                     }
                   }
                 case _ =>

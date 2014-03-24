@@ -81,7 +81,7 @@ class ScalaFindUsagesHandler(element: PsiElement) extends FindUsagesHandler(elem
         }
       case t: ScTrait => Array(t.fakeCompanionClass)
       case t: ScTypedDefinition =>
-        t.getBeanMethods.toArray ++ {
+        t.getSynthetics.toArray ++ {
           val a: Array[DefinitionRole] = t.nameContext match {
             case v: ScValue if ScalaPsiUtil.isBeanProperty(v) => Array(GETTER)
             case v: ScVariable if ScalaPsiUtil.isBeanProperty(v) => Array(GETTER, SETTER)

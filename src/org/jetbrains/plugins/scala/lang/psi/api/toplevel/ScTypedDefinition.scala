@@ -6,14 +6,15 @@ package toplevel
 
 import fake.FakePsiMethod
 import types.result.{TypingContext, TypingContextOwner}
-import com.intellij.openapi.util.text.StringUtil
 import types.ScType
 import types.nonvalue.Parameter
 import com.intellij.psi.{PsiElement, PsiClass, PsiMethod}
 import com.intellij.util.containers.ConcurrentHashMap
 import light.{PsiClassWrapper, StaticPsiTypedDefinitionWrapper, PsiTypedDefinitionWrapper}
 import extensions.toSeqExt
-import org.jetbrains.plugins.scala.lang.psi.api.annotations.{BeanGenerator, SyntheticMemberCreator, Generator, MacroAnnotations}
+import org.jetbrains.plugins.scala.lang.psi.api.annotations.{SyntheticMemberCreator, MacroAnnotations}
+import org.jetbrains.plugins.scala.lang.psi.api.annotations.beans.BeanMacroGenerator.{GetterCreator, SetterCreator}
+import org.jetbrains.plugins.scala.lang.psi.api.annotations.beans.BooleanBeanMacroGenerator
 
 /**
  * Member definitions, classes, named patterns which have types
@@ -42,7 +43,7 @@ trait ScTypedDefinition extends ScNamedElement with TypingContextOwner {
   def getUnderEqualsMethod: PsiMethod = {
     def inner(): PsiMethod = {
       val hasModifierProperty: String => Boolean = nameContext match {
-        case v: ScModifierListOwner => v.hasModifierProperty _
+        case v: ScModifierListOwner => v.hasModifierProperty
         case _ => _ => false
       }
       val tType = getType(TypingContext.empty).getOrAny
@@ -62,30 +63,16 @@ trait ScTypedDefinition extends ScNamedElement with TypingContextOwner {
 
   def getGetBeanMethod: PsiMethod = {
 
-    getSyntheticMember(BeanGenerator.GetterCreator)
+    getSyntheticMember(GetterCreator)
   }
 
   def getSetBeanMethod: PsiMethod = {
 
-    getSyntheticMember(BeanGenerator.SetterCreator)
+    getSyntheticMember(SetterCreator)
   }
 
   def getIsBeanMethod: PsiMethod = {
-    def inner(): PsiMethod = {
-      val hasModifierProperty: String => Boolean = nameContext match {
-        case v: ScModifierListOwner => v.hasModifierProperty _
-        case _ => _ => false
-      }
-      new FakePsiMethod(this, "is" + StringUtil.capitalize(this.name), Array.empty,
-        this.getType(TypingContext.empty).getOrAny, hasModifierProperty)
-    }
-
-    val curModCount = getManager.getModificationTracker.getOutOfCodeBlockModificationCount
-    if (isBeanMethodsCache != null && isModCount == curModCount) return isBeanMethodsCache
-    val res = inner()
-    isModCount = curModCount
-    isBeanMethodsCache = res
-    res
+    getSyntheticMember(BooleanBeanMacroGenerator.IsGetterCreator)
   }
 
   def getSynthetics: Seq[PsiMethod] = {
@@ -128,7 +115,7 @@ trait ScTypedDefinition extends ScNamedElement with TypingContextOwner {
   def isVal: Boolean = false
 
   @volatile
-  private var cachedMap: Map[(Generator, Int), (PsiMethod, Long)] = Map()
+  private var cachedMap: Map[SyntheticMemberCreator, (PsiMethod, Long)] = Map()
 
   @volatile
   private var methodCache: Seq[PsiMethod] = null
@@ -151,12 +138,12 @@ trait ScTypedDefinition extends ScNamedElement with TypingContextOwner {
 
   def getSyntheticMember(creator: SyntheticMemberCreator): PsiMethod = {
     val curModCount = getManager.getModificationTracker.getOutOfCodeBlockModificationCount
-    cachedMap.get(creator.getKey) match {
+    cachedMap.get(creator) match {
       case Some(v) if v._2 == curModCount =>
         v._1
       case _ =>
         val v = (creator.createMember(this), curModCount)
-        cachedMap = cachedMap.updated(creator.getKey, v)
+        cachedMap = cachedMap.updated(creator, v)
         v._1
     }
   }

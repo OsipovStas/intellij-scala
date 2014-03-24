@@ -1,12 +1,8 @@
 package org.jetbrains.plugins.scala
 package lang.psi.api.annotations
 
-import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
 import com.intellij.psi.PsiNamedElement
-import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScNamedElement
-import org.jetbrains.plugins.scala.lang.psi.types.ScSubstitutor
-import org.jetbrains.plugins.scala.lang.psi.api.statements.ScAnnotationsHolder
-import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScClassParameter
+import org.jetbrains.plugins.scala.lang.psi.api.annotations.beans.{BooleanBeanMacroGenerator, BeanMacroGenerator}
 
 /**
  * @author stasstels
@@ -31,10 +27,10 @@ object MacroAnnotations {
   def getSuitableCreator(baseName: String, decodedName: String) = {
     generators.flatMap {
       case gen => gen.findSuitableCreators(baseName, decodedName)
-    }.headOption
+    }
   }
 
 
-  val generators: Seq[Generator] = Seq(BeanGenerator)
+  val generators: Seq[MacroGenerator] = Seq(BeanMacroGenerator, BooleanBeanMacroGenerator)
 
 }

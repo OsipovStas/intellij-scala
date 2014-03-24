@@ -29,7 +29,6 @@ import api.statements._
 import extensions.toPsiMemberExt
 import params.{ScParameter, ScParameterClause, ScClassParameter}
 import collection.mutable
-import org.jetbrains.plugins.scala.lang.psi.api.annotations.MacroAnnotations
 
 /**
  * @author Alexander.Podkhalyuzin
@@ -166,7 +165,6 @@ class ScClassImpl extends ScTypeDefinitionImpl with ScClass with ScTypeParameter
               case s: ScAnnotationsHolder =>
                 val beanProperty = ScalaPsiUtil.isBeanProperty(s)
                 val booleanBeanProperty = ScalaPsiUtil.isBooleanBeanProperty(s)
-                val fakeProperty: Boolean = MacroAnnotations.isFakeProperty(s)
                 if (beanProperty) {
                   if (nodeName == "get" + t.name.capitalize) {
                     res += t.getTypedDefinitionWrapper(isStatic = false, isInterface = isInterface, role = GETTER, cClass = cClass)
@@ -184,12 +182,6 @@ class ScClassImpl extends ScTypeDefinitionImpl with ScClass with ScTypeParameter
                   if (t.isVar && nodeName == "set" + t.name.capitalize) {
                     res += t.getTypedDefinitionWrapper(isStatic = false, isInterface = isInterface, role = SETTER, cClass = cClass)
                     names += "set" + t.getName.capitalize
-                  }
-                }
-                if(fakeProperty) {
-                  if (t.isVar && nodeName == "fake" + t.name.capitalize) {
-                    res += t.getTypedDefinitionWrapper(isStatic = false, isInterface = isInterface, role = SIMPLE_ROLE, cClass = cClass)
-                    names += "fake" + t.getName.capitalize
                   }
                 }
               case _ =>

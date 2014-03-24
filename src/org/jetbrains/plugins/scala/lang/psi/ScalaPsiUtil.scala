@@ -52,7 +52,6 @@ import scala.collection.mutable.ArrayBuffer
 import com.intellij.psi.impl.compiled.ClsFileImpl
 import scala.collection.{mutable, Set, Seq}
 import scala.util.control.ControlThrowable
-import scala.annotation.tailrec
 import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes
 import com.intellij.psi.tree.TokenSet
 import com.intellij.lang.java.JavaLanguage
@@ -62,14 +61,12 @@ import scala.Some
 import org.jetbrains.plugins.scala.lang.psi.types.ScUndefinedType
 import org.jetbrains.plugins.scala.lang.psi.types.ScCompoundType
 import org.jetbrains.plugins.scala.lang.psi.types.ScAbstractType
-import org.jetbrains.plugins.scala.lang.psi.types.ScFunctionType
 import org.jetbrains.plugins.scala.lang.resolve.processor.MostSpecificUtil
 import org.jetbrains.plugins.scala.lang.psi.types.Conformance.AliasType
 import org.jetbrains.plugins.scala.lang.psi.types.ScDesignatorType
 import org.jetbrains.plugins.scala.lang.psi.implicits.ScImplicitlyConvertible.ImplicitResolveResult
 import org.jetbrains.plugins.scala.lang.psi.types.ScTypeParameterType
 import org.jetbrains.plugins.scala.lang.psi.types.nonvalue.Parameter
-import org.jetbrains.plugins.scala.lang.psi.types.ScTupleType
 import org.jetbrains.plugins.scala.lang.psi.types.nonvalue.ScTypePolymorphicType
 import org.jetbrains.plugins.scala.lang.psi.types.result.Success
 import org.jetbrains.plugins.scala.lang.psi.types.JavaArrayType
@@ -1180,7 +1177,7 @@ object ScalaPsiUtil {
     }
 
 
-    val beanMethods = typed.getBeanMethods
+    val beanMethods = typed.getSynthetics
     beanMethods.foreach {method =>
       val sigs = TypeDefinitionMembers.getSignatures(clazz).forName(method.name)._1
       (sigs.get(new PhysicalSignature(method, ScSubstitutor.empty)): @unchecked) match {
