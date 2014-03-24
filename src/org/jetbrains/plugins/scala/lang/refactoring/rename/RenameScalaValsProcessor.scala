@@ -25,6 +25,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.openapi.util.Pass
 import java.util
 import org.jetbrains.plugins.scala.lang.refactoring.util.ScalaNamesUtil
+import org.jetbrains.plugins.scala.lang.psi.api.annotations.MacroAnnotations
 
 /**
  * User: Alexander Podkhalyuzin
@@ -45,15 +46,11 @@ class RenameScalaValsProcessor extends RenameJavaMemberProcessor {
 
   override def prepareRenaming(element: PsiElement, newName: String, allRenames: util.Map[PsiElement, String]) {
     val namedElement = element match {case x: PsiNamedElement => x case _ => return}
-    def addBeanMethods(element: PsiElement, newName: String) {
+    def addSyntheticMethods(element: PsiElement, newName: String) {
       element match {
         case t: ScTypedDefinition =>
-          for (method <- t.getSynthetics) {
-            val name = method.name
-            val is = name.startsWith("is")
-            val prefix = if (is) "is" else name.substring(0, 3)
-            val newBeanName = prefix + StringUtil.capitalize(newName)
-            allRenames.put(method, newBeanName)
+          MacroAnnotations.getSyntheticCreatorsFor(t).foreach {
+            case creator => allRenames.put(t.getSyntheticMember(creator), creator.transformedName(newName))
           }
           t.nameContext match {
             case member: ScMember if member.containingClass != null =>
@@ -73,7 +70,7 @@ class RenameScalaValsProcessor extends RenameJavaMemberProcessor {
       }
     }
 
-    addBeanMethods(element, newName)
+    addSyntheticMethods(element, newName)
 
     for (elem <- ScalaOverridingMemberSearcher.search(namedElement, deep = true)) {
       val overriderName = elem.name
@@ -81,7 +78,7 @@ class RenameScalaValsProcessor extends RenameJavaMemberProcessor {
       val newOverriderName = RefactoringUtil.suggestNewOverriderName(overriderName, baseName, newName)
       if (newOverriderName != null) {
         allRenames.put(elem, newOverriderName)
-        addBeanMethods(elem, newOverriderName)
+        addSyntheticMethods(elem, newOverriderName)
       }
     }
     RenameSuperMembersUtil.prepareSuperMembers(element, newName, allRenames)

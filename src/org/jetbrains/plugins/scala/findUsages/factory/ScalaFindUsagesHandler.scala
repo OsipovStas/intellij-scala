@@ -7,7 +7,6 @@ import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScTypedDefinition
 import org.jetbrains.plugins.scala.extensions.toPsiNamedElementExt
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScTypeDefinition, ScClass, ScTrait, ScObject}
-import org.jetbrains.plugins.scala.lang.psi.light.PsiTypedDefinitionWrapper.DefinitionRole._
 import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScTypeAlias, ScFunction, ScVariable, ScValue}
 import org.jetbrains.plugins.scala.lang.psi.light._
 import com.intellij.openapi.actionSystem.DataContext
@@ -20,6 +19,7 @@ import org.jetbrains.plugins.scala.util.ScalaUtil
 import scala.Array
 import org.jetbrains.plugins.scala.lang.psi.impl.search.ScalaOverridingMemberSearcher
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScPrimaryConstructor
+import org.jetbrains.plugins.scala.lang.psi.api.annotations.MacroAnnotations
 
 /**
  * User: Alexander Podkhalyuzin
@@ -81,16 +81,9 @@ class ScalaFindUsagesHandler(element: PsiElement) extends FindUsagesHandler(elem
         }
       case t: ScTrait => Array(t.fakeCompanionClass)
       case t: ScTypedDefinition =>
-        t.getSynthetics.toArray ++ {
-          val a: Array[DefinitionRole] = t.nameContext match {
-            case v: ScValue if ScalaPsiUtil.isBeanProperty(v) => Array(GETTER)
-            case v: ScVariable if ScalaPsiUtil.isBeanProperty(v) => Array(GETTER, SETTER)
-            case v: ScValue if ScalaPsiUtil.isBooleanBeanProperty(v) => Array(IS_GETTER)
-            case v: ScVariable if ScalaPsiUtil.isBooleanBeanProperty(v) => Array(IS_GETTER, SETTER)
-            case _ => Array.empty
-          }
-          a.map(role => t.getTypedDefinitionWrapper(isStatic = false, isInterface = false, role = role, cClass = None))
-        }
+        t.getSynthetics.toArray[PsiElement] ++ MacroAnnotations.getSyntheticCreatorsFor(t).map {
+          case creator => t.getTypedDefinitionWrapper(isStatic = false, isInterface = false, role = creator.getRole, cClass = None)
+        }.toArray[PsiElement]
       case _ => Array.empty
     }
   }

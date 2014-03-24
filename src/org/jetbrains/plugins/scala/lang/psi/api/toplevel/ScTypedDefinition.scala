@@ -13,7 +13,7 @@ import com.intellij.util.containers.ConcurrentHashMap
 import light.{PsiClassWrapper, StaticPsiTypedDefinitionWrapper, PsiTypedDefinitionWrapper}
 import extensions.toSeqExt
 import org.jetbrains.plugins.scala.lang.psi.api.annotations.{SyntheticMemberCreator, MacroAnnotations}
-import org.jetbrains.plugins.scala.lang.psi.api.annotations.beans.BeanMacroGenerator.{GetterCreator, SetterCreator}
+import org.jetbrains.plugins.scala.lang.psi.api.annotations.beans.BeanMacroGenerator.GetterCreator
 import org.jetbrains.plugins.scala.lang.psi.api.annotations.beans.BooleanBeanMacroGenerator
 
 /**
@@ -32,6 +32,15 @@ trait ScTypedDefinition extends ScNamedElement with TypingContextOwner {
   @volatile
   private var underEqualsModCount: Long = 0L
 
+
+  @volatile
+  private var cachedMethodsMap: Map[SyntheticMemberCreator, (PsiMethod, Long)] = Map()
+
+  @volatile
+  private var syntheticMethodsCache: Seq[PsiMethod] = null
+
+  @volatile
+  private var modCount: Long = 0L
 
 
 
@@ -57,23 +66,19 @@ trait ScTypedDefinition extends ScNamedElement with TypingContextOwner {
     res
   }
 
-  def getGetBeanMethod: PsiMethod = {
-
-    getSyntheticMember(GetterCreator)
-  }
-
-  def getSetBeanMethod: PsiMethod = {
-
-    getSyntheticMember(SetterCreator)
-  }
-
-  def getIsBeanMethod: PsiMethod = {
-    getSyntheticMember(BooleanBeanMacroGenerator.IsGetterCreator)
-  }
-
   def getSynthetics: Seq[PsiMethod] = {
-    getSyntheticsStub
+    val curModCount = getManager.getModificationTracker.getOutOfCodeBlockModificationCount
+    if(syntheticMethodsCache != null && curModCount == modCount) syntheticMethodsCache
+    else {
+      val res: Seq[PsiMethod] = MacroAnnotations.getSyntheticCreatorsFor(this).map {
+        case creator => getSyntheticMember(creator)
+      }
+      modCount = curModCount
+      syntheticMethodsCache = res
+      res
+    }
   }
+
 
 
   import PsiTypedDefinitionWrapper.DefinitionRole._
@@ -110,36 +115,14 @@ trait ScTypedDefinition extends ScNamedElement with TypingContextOwner {
   def isVar: Boolean = false
   def isVal: Boolean = false
 
-  @volatile
-  private var cachedMap: Map[SyntheticMemberCreator, (PsiMethod, Long)] = Map()
-
-  @volatile
-  private var methodCache: Seq[PsiMethod] = null
-
-  @volatile
-  private var theModCount: Long = 0L
-
-  def getSyntheticsStub: Seq[PsiMethod] = {
-    val curModCount = getManager.getModificationTracker.getOutOfCodeBlockModificationCount
-    if(methodCache != null && curModCount == theModCount) methodCache
-    else {
-      val res: Seq[PsiMethod] = MacroAnnotations.getSyntheticCreatorsFor(this).map {
-        case creator => getSyntheticMember(creator)
-      }
-      theModCount = curModCount
-      methodCache = res
-      res
-    }
-  }
-
   def getSyntheticMember(creator: SyntheticMemberCreator): PsiMethod = {
     val curModCount = getManager.getModificationTracker.getOutOfCodeBlockModificationCount
-    cachedMap.get(creator) match {
+    cachedMethodsMap.get(creator) match {
       case Some(v) if v._2 == curModCount =>
         v._1
       case _ =>
         val v = (creator.createMember(this), curModCount)
-        cachedMap = cachedMap.updated(creator, v)
+        cachedMethodsMap = cachedMethodsMap.updated(creator, v)
         v._1
     }
   }
