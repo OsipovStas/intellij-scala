@@ -30,6 +30,7 @@ import extensions.toPsiMemberExt
 import collection.mutable
 import lang.resolve.processor.BaseProcessor
 import com.intellij.lang.java.lexer.JavaLexer
+import org.jetbrains.plugins.scala.lang.psi.api.annotations.MacroAnnotations
 
 /**
  * @author Alexander Podkhalyuzin
@@ -264,25 +265,9 @@ class ScObjectImpl extends ScTypeDefinitionImpl with ScObject with ScTemplateDef
                 res += t.getTypedDefinitionWrapper(isStatic = false, isInterface = isInterface, role = EQ, cClass = cClass)
               }
             }
-            t.nameContext match {
-              case s: ScAnnotationsHolder =>
-                val beanProperty = ScalaPsiUtil.isBeanProperty(s)
-                val booleanBeanProperty = ScalaPsiUtil.isBooleanBeanProperty(s)
-                if (beanProperty) {
-                  if (nodeName == "get" + t.name.capitalize) {
-                    res += t.getTypedDefinitionWrapper(isStatic = false, isInterface = isInterface, role = GETTER, cClass = cClass)
-                  }
-                  if (t.isVar && nodeName == "set" + t.name.capitalize) {
-                    res += t.getTypedDefinitionWrapper(isStatic = false, isInterface = isInterface, role = SETTER, cClass = cClass)
-                  }
-                } else if (booleanBeanProperty) {
-                  if (nodeName == "is" + t.name.capitalize) {
-                    res += t.getTypedDefinitionWrapper(isStatic = false, isInterface = isInterface, role = IS_GETTER, cClass = cClass)
-                  }
-                  if (t.isVar && nodeName == "set" + t.name.capitalize) {
-                    res += t.getTypedDefinitionWrapper(isStatic = false, isInterface = isInterface, role = SETTER, cClass = cClass)
-                  }
-                }
+            MacroAnnotations.getSyntheticCreatorsFor(t).foreach {
+              case creator if nodeName == creator.transformedName(t.name) =>
+                res += t.getTypedDefinitionWrapper(isStatic = false, isInterface = isInterface, role = creator.getRole, cClass = cClass)
               case _ =>
             }
           case _ =>

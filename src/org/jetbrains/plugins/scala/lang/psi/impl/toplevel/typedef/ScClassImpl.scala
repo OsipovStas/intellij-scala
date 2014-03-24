@@ -29,6 +29,7 @@ import api.statements._
 import extensions.toPsiMemberExt
 import params.{ScParameter, ScParameterClause, ScClassParameter}
 import collection.mutable
+import org.jetbrains.plugins.scala.lang.psi.api.annotations.MacroAnnotations
 
 /**
  * @author Alexander.Podkhalyuzin
@@ -161,29 +162,10 @@ class ScClassImpl extends ScTypeDefinitionImpl with ScClass with ScTypeParameter
               }
             }
             names += t.getName
-            t.nameContext match {
-              case s: ScAnnotationsHolder =>
-                val beanProperty = ScalaPsiUtil.isBeanProperty(s)
-                val booleanBeanProperty = ScalaPsiUtil.isBooleanBeanProperty(s)
-                if (beanProperty) {
-                  if (nodeName == "get" + t.name.capitalize) {
-                    res += t.getTypedDefinitionWrapper(isStatic = false, isInterface = isInterface, role = GETTER, cClass = cClass)
-                    names += "get" + t.getName.capitalize
-                  }
-                  if (t.isVar && nodeName == "set" + t.name.capitalize) {
-                    res += t.getTypedDefinitionWrapper(isStatic = false, isInterface = isInterface, role = SETTER, cClass = cClass)
-                    names += "set" + t.getName.capitalize
-                  }
-                } else if (booleanBeanProperty) {
-                  if (nodeName == "is" + t.name.capitalize) {
-                    res += t.getTypedDefinitionWrapper(isStatic = false, isInterface = isInterface, role = IS_GETTER, cClass = cClass)
-                    names += "is" + t.getName.capitalize
-                  }
-                  if (t.isVar && nodeName == "set" + t.name.capitalize) {
-                    res += t.getTypedDefinitionWrapper(isStatic = false, isInterface = isInterface, role = SETTER, cClass = cClass)
-                    names += "set" + t.getName.capitalize
-                  }
-                }
+            MacroAnnotations.getSyntheticCreatorsFor(t).foreach {
+              case creator if nodeName == creator.transformedName(t.name) =>
+                res += t.getTypedDefinitionWrapper(isStatic = false, isInterface = isInterface, role = creator.getRole, cClass = cClass)
+                names += creator.transformedName(t.getName)
               case _ =>
             }
           case _ =>
@@ -219,25 +201,9 @@ class ScClassImpl extends ScTypeDefinitionImpl with ScClass with ScTypeParameter
                       add(t.getTypedDefinitionWrapper(isStatic = false, isInterface = isInterface, role = EQ))
                     }
                   }
-                  t.nameContext match {
-                    case s: ScAnnotationsHolder =>
-                      val beanProperty = ScalaPsiUtil.isBeanProperty(s)
-                      val booleanBeanProperty = ScalaPsiUtil.isBooleanBeanProperty(s)
-                      if (beanProperty) {
-                        if (nodeName == "get" + t.name.capitalize) {
-                          add(t.getTypedDefinitionWrapper(isStatic = true, isInterface = false, role = GETTER))
-                        }
-                        if (t.isVar && nodeName == "set" + t.name.capitalize) {
-                          add(t.getTypedDefinitionWrapper(isStatic = true, isInterface = false, role = SETTER))
-                        }
-                      } else if (booleanBeanProperty) {
-                        if (nodeName == "is" + t.name.capitalize) {
-                          add(t.getTypedDefinitionWrapper(isStatic = true, isInterface = false, role = IS_GETTER))
-                        }
-                        if (t.isVar && nodeName == "set" + t.name.capitalize) {
-                          add(t.getTypedDefinitionWrapper(isStatic = true, isInterface = false, role = SETTER))
-                        }
-                      }
+                  MacroAnnotations.getSyntheticCreatorsFor(t).foreach {
+                    case creator if nodeName == creator.transformedName(t.name) =>
+                      add(t.getTypedDefinitionWrapper(isStatic = true, isInterface = false, role = creator.getRole))
                     case _ =>
                   }
                 case _ =>

@@ -26,10 +26,6 @@ trait ScTypedDefinition extends ScNamedElement with TypingContextOwner {
    */
   def isStable = true
 
-  @volatile
-  private var isBeanMethodsCache: PsiMethod = null
-  @volatile
-  private var isModCount: Long = 0L
 
   @volatile
   private var underEqualsMethodsCache: PsiMethod = null

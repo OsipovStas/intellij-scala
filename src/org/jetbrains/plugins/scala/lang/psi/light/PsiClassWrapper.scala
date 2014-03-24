@@ -25,6 +25,7 @@ import java.util
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.scope.processor.MethodsProcessor
 import com.intellij.psi.util.PsiUtil
+import org.jetbrains.plugins.scala.lang.psi.api.annotations.MacroAnnotations
 
 /**
  * @author Alefas
@@ -98,25 +99,9 @@ class PsiClassWrapper(val definition: ScTemplateDefinition,
                       res += t.getTypedDefinitionWrapper(isStatic = false, isInterface = isInterface, role = EQ)
                     }
                   }
-                  t.nameContext match {
-                    case s: ScAnnotationsHolder =>
-                      val beanProperty = ScalaPsiUtil.isBeanProperty(s)
-                      val booleanBeanProperty = ScalaPsiUtil.isBooleanBeanProperty(s)
-                      if (beanProperty) {
-                        if (nodeName == "get" + t.name.capitalize) {
-                          res += t.getTypedDefinitionWrapper(isStatic = true, isInterface = false, role = GETTER, cClass = Some(definition))
-                        }
-                        if (t.isVar && nodeName == "set" + t.name.capitalize) {
-                          res += t.getTypedDefinitionWrapper(isStatic = true, isInterface = false, role = SETTER, cClass = Some(definition))
-                        }
-                      } else if (booleanBeanProperty) {
-                        if (nodeName == "is" + t.name.capitalize) {
-                          res += t.getTypedDefinitionWrapper(isStatic = true, isInterface = false, role = IS_GETTER, cClass = Some(definition))
-                        }
-                        if (t.isVar && nodeName == "set" + t.name.capitalize) {
-                          res += t.getTypedDefinitionWrapper(isStatic = true, isInterface = false, role = SETTER, cClass = Some(definition))
-                        }
-                      }
+                  MacroAnnotations.getSyntheticCreatorsFor(t).foreach {
+                    case creator if nodeName == creator.transformedName(t.name) =>
+                      res += t.getTypedDefinitionWrapper(isStatic = true, isInterface = false, role = creator.getRole, cClass = Some(definition))
                     case _ =>
                   }
                 case _ =>

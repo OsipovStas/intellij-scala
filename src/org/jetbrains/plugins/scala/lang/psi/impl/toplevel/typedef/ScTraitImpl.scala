@@ -16,6 +16,7 @@ import api.statements._
 import collection.mutable.ArrayBuffer
 import light.PsiClassWrapper
 import extensions.toPsiMemberExt
+import org.jetbrains.plugins.scala.lang.psi.api.annotations.MacroAnnotations
 
 /**
 * @author Alexander Podkhalyuzin
@@ -89,25 +90,9 @@ class ScTraitImpl extends ScTypeDefinitionImpl with ScTrait with ScTypeParameter
                 res += t.getTypedDefinitionWrapper(isStatic = false, isInterface = true, role = EQ)
               }
             }
-            t.nameContext match {
-              case s: ScAnnotationsHolder =>
-                val beanProperty = ScalaPsiUtil.isBeanProperty(s)
-                val booleanBeanProperty = ScalaPsiUtil.isBooleanBeanProperty(s)
-                if (beanProperty) {
-                  if (nodeName == "get" + t.name.capitalize) {
-                    res += t.getTypedDefinitionWrapper(isStatic = false, isInterface = true, role = GETTER)
-                  }
-                  if (t.isVar && nodeName == "set" + t.name.capitalize) {
-                    res += t.getTypedDefinitionWrapper(isStatic = false, isInterface = true, role = SETTER)
-                  }
-                } else if (booleanBeanProperty) {
-                  if (nodeName == "is" + t.name.capitalize) {
-                    res += t.getTypedDefinitionWrapper(isStatic = false, isInterface = true, role = IS_GETTER)
-                  }
-                  if (t.isVar && nodeName == "set" + t.name.capitalize) {
-                    res += t.getTypedDefinitionWrapper(isStatic = false, isInterface = true, role = SETTER)
-                  }
-                }
+            MacroAnnotations.getSyntheticCreatorsFor(t).foreach {
+              case creator if nodeName == creator.transformedName(t.name) =>
+                res += t.getTypedDefinitionWrapper(isStatic = false, isInterface = true, role = creator.getRole)
               case _ =>
             }
           case _ =>
