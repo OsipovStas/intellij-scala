@@ -7,26 +7,21 @@ package patterns
 
 import com.intellij.navigation.NavigationItem
 import com.intellij.psi.impl.ResolveScopeManager
-import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.{SearchScope, LocalSearchScope}
 import com.intellij.psi.util.PsiTreeUtil
 import statements._
 import toplevel.templates.ScTemplateBody
-import toplevel.{ScEarlyDefinitions, ScNamedElement, ScTypedDefinition}
+import org.jetbrains.plugins.scala.lang.psi.api.toplevel.{ScModifierListOwner, ScEarlyDefinitions, ScNamedElement, ScTypedDefinition}
 import toplevel.typedef.{ScTemplateDefinition, ScMember, ScTypeDefinition}
 import com.intellij.psi.javadoc.PsiDocComment
 import extensions.toPsiNamedElementExt
 import com.intellij.psi._
-import org.jetbrains.plugins.scala.lang.psi.api.expr.ScBlock
+import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScForStatement, ScGenerator, ScEnumerator, ScBlock}
 
 trait ScBindingPattern extends ScPattern with ScNamedElement with ScTypedDefinition with NavigationItem with PsiDocCommentOwner {
   override def getTextOffset: Int = nameId.getTextRange.getStartOffset
 
   def isWildcard: Boolean
-
-  abstract override def getUseScope = {
-    val block = PsiTreeUtil.getContextOfType(this, true, classOf[ScBlock])
-    if (block != null) new LocalSearchScope(block) else super.getUseScope
-  }
 
   protected def getEnclosingVariable: Option[ScVariable] = {
     ScalaPsiUtil.nameContext(this) match {
