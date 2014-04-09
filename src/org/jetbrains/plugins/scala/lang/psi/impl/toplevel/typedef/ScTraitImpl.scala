@@ -16,7 +16,6 @@ import api.statements._
 import collection.mutable.ArrayBuffer
 import light.PsiClassWrapper
 import extensions.toPsiMemberExt
-import org.jetbrains.plugins.scala.lang.psi.api.annotations.MacroAnnotations
 
 /**
 * @author Alexander Podkhalyuzin
@@ -89,11 +88,6 @@ class ScTraitImpl extends ScTypeDefinitionImpl with ScTrait with ScTypeParameter
               if (t.isVar) {
                 res += t.getTypedDefinitionWrapper(isStatic = false, isInterface = true, role = EQ)
               }
-            }
-            MacroAnnotations.getSyntheticCreatorsFor(t).foreach {
-              case creator if nodeName == creator.transformedName(t.name) =>
-                res += t.getTypedDefinitionWrapper(isStatic = false, isInterface = true, role = creator.getRole)
-              case _ =>
             }
           case _ =>
         }

@@ -25,7 +25,6 @@ import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.openapi.util.Pass
 import java.util
 import org.jetbrains.plugins.scala.lang.refactoring.util.ScalaNamesUtil
-import org.jetbrains.plugins.scala.lang.psi.api.annotations.MacroAnnotations
 import org.jetbrains.plugins.scala.lang.psi.api.annotations.typedef.SyntheticOwner
 import org.jetbrains.plugins.scala.lang.psi.api.annotations.base.SyntheticAnnotations
 
@@ -51,9 +50,6 @@ class RenameScalaValsProcessor extends RenameJavaMemberProcessor {
     def addSyntheticMethods(element: PsiElement, newName: String) {
       element match {
         case t: ScTypedDefinition =>
-          MacroAnnotations.getSyntheticCreatorsFor(t).foreach {
-            case creator => allRenames.put(t.getSyntheticMember(creator), creator.transformedName(newName))
-          }
           t.nameContext match {
             case owner: SyntheticOwner =>
               SyntheticAnnotations.getCreatorsFor(owner).foreach {

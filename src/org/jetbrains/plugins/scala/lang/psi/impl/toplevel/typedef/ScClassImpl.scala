@@ -29,7 +29,6 @@ import api.statements._
 import extensions.toPsiMemberExt
 import params.{ScParameter, ScParameterClause, ScClassParameter}
 import collection.mutable
-import org.jetbrains.plugins.scala.lang.psi.api.annotations.MacroAnnotations
 
 /**
  * @author Alexander.Podkhalyuzin
@@ -162,12 +161,6 @@ class ScClassImpl extends ScTypeDefinitionImpl with ScClass with ScTypeParameter
               }
             }
             names += t.getName
-            MacroAnnotations.getSyntheticCreatorsFor(t).foreach {
-              case creator if nodeName == creator.transformedName(t.name) =>
-                res += t.getTypedDefinitionWrapper(isStatic = false, isInterface = isInterface, role = creator.getRole, cClass = cClass)
-                names += creator.transformedName(t.getName)
-              case _ =>
-            }
           case _ =>
         }
       }
@@ -200,11 +193,6 @@ class ScClassImpl extends ScTypeDefinitionImpl with ScClass with ScTypeParameter
                     if (t.isVar) {
                       add(t.getTypedDefinitionWrapper(isStatic = false, isInterface = isInterface, role = EQ))
                     }
-                  }
-                  MacroAnnotations.getSyntheticCreatorsFor(t).foreach {
-                    case creator if nodeName == creator.transformedName(t.name) =>
-                      add(t.getTypedDefinitionWrapper(isStatic = true, isInterface = false, role = creator.getRole))
-                    case _ =>
                   }
                 case _ =>
               }

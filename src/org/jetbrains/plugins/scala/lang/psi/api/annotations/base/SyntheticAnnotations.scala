@@ -2,7 +2,7 @@ package org.jetbrains.plugins.scala
 package lang.psi.api.annotations.base
 
 import org.jetbrains.plugins.scala.lang.psi.api.annotations.typedef.SyntheticOwner
-import org.jetbrains.plugins.scala.lang.psi.api.annotations.dsl.{BooleanBeans, Beans, MacroAnnotation, Type}
+import org.jetbrains.plugins.scala.lang.psi.api.annotations.dsl.{BooleanBeans, Beans, MacroAnnotation}
 
 /**
  * @author stasstels
@@ -18,6 +18,5 @@ object SyntheticAnnotations {
 
   var generators: Seq[SyntheticGenerator] = Seq(SyntheticGenerator(Beans), SyntheticGenerator(BooleanBeans))
 
-  case class ProxyType(typeText: String) extends Type
 }
 

@@ -16,7 +16,6 @@ import types.result.TypingContext
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.progress.ProgressManager
 import util._
-import reflect.NameTransformer
 import com.intellij.openapi.diagnostic.Logger
 import types._
 import caches.CachesUtil
@@ -26,8 +25,6 @@ import api.toplevel.{ScNamedElement, ScModifierListOwner, ScTypedDefinition}
 import api.base.{ScAccessModifier, ScFieldId, ScPrimaryConstructor}
 import extensions.toPsiNamedElementExt
 import caches.CachesUtil.MyOptionalProvider
-import org.jetbrains.plugins.scala.lang.psi.api.annotations.MacroAnnotations
-import com.intellij.openapi
 import org.jetbrains.plugins.scala.lang.psi.api.annotations.typedef.SyntheticOwner
 
 /**
@@ -134,24 +131,15 @@ object TypeDefinitionMembers {
           case _var: ScVariable if isBridge(place, _var) =>
             for (dcl <- _var.declaredElements) {
               addSignature(new Signature(dcl.name, Stream.empty, 0, subst, Some(dcl)))
-              MacroAnnotations.getSyntheticCreatorsFor(dcl, noResolve = true).foreach {
-                case creator => addSignature(creator.createSignature(dcl, subst))
-              }
             }
           case _val: ScValue if isBridge(place, _val) =>
             for (dcl <- _val.declaredElements) {
               addSignature(new Signature(dcl.name, Stream.empty, 0, subst, Some(dcl)))
-              MacroAnnotations.getSyntheticCreatorsFor(dcl, noResolve = true).foreach {
-                case creator => addSignature(creator.createSignature(dcl, subst))
-              }
             }
           case constr: ScPrimaryConstructor =>
             val parameters = constr.parameters
             for (param <- parameters if isBridge(place, param)) {
               addSignature(new Signature(param.name, Stream.empty, 0, subst, Some(param)))
-              MacroAnnotations.getSyntheticCreatorsFor(param, noResolve = true).foreach {
-                case creator => addSignature(creator.createSignature(param, subst))
-              }
             }
           case f: ScFunction if isBridge(place, f) && !f.isConstructor && f.parameters.length == 0 =>
             addSignature(new PhysicalSignature(f, subst))
@@ -356,16 +344,10 @@ object TypeDefinitionMembers {
               lazy val t = dcl.getType(TypingContext.empty).getOrAny
               addSignature(new Signature(dcl.name, Stream.empty, 0, subst, Some(dcl)))
               addSignature(new Signature(dcl.name + "_=", ScalaPsiUtil.getSingletonStream(t), 1, subst, Some(dcl)))
-              MacroAnnotations.getSyntheticCreatorsFor(dcl, noResolve = true).foreach {
-                case creator => addSignature(creator.createSignature(dcl, subst))
-              }
             }
           case _val: ScValue if isBridge(place, _val) =>
             for (dcl <- _val.declaredElements) {
               addSignature(new Signature(dcl.name, Stream.empty, 0, subst, Some(dcl)))
-              MacroAnnotations.getSyntheticCreatorsFor(dcl, noResolve = true).foreach {
-                case creator => addSignature(creator.createSignature(dcl, subst))
-              }
             }
           case constr: ScPrimaryConstructor => {
             val parameters = constr.parameters
@@ -374,9 +356,6 @@ object TypeDefinitionMembers {
               addSignature(new Signature(param.name, Stream.empty, 0, subst, Some(param)))
               if (!param.isStable) addSignature(new Signature(param.name + "_=", ScalaPsiUtil.getSingletonStream(t), 1, subst,
                 Some(param)))
-              MacroAnnotations.getSyntheticCreatorsFor(param, noResolve = true).foreach {
-                case creator => addSignature(creator.createSignature(param, subst))
-              }
             }
           }
           case f: ScFunction if isBridge(place, f) && !f.isConstructor =>
@@ -686,13 +665,6 @@ object TypeDefinitionMembers {
       else convertMemberName(s) == decodedName
     }
 
-    def checkSyntheticName(s: String): Boolean = {
-      if (name == null || name == "") true
-      else {
-        val decoded = NameTransformer.decode(s)
-        MacroAnnotations.hasSuitableCreator(decoded, decodedName)
-      }
-    }
 
     val processVals = shouldProcessVals(processor)
     val processMethods = shouldProcessMethods(processor)
@@ -709,7 +681,7 @@ object TypeDefinitionMembers {
           }
           elem match {
             case p: ScClassParameter if processValsForScala && !p.isVar && !p.isVal &&
-              (checkName(p.name) || checkSyntheticName(p.name)) && isScalaProcessor =>
+              (checkName(p.name)) && isScalaProcessor =>
               val clazz = PsiTreeUtil.getContextOfType(p, true, classOf[ScTemplateDefinition])
               if (clazz != null && clazz.isInstanceOf[ScClass] && !p.isEffectiveVal) {
                 //this is member only for class scope
@@ -734,32 +706,6 @@ object TypeDefinitionMembers {
                 case t: ScTypedDefinition if t.isVar && signature.name.endsWith("_=") =>
                   if (processValsForScala && !processor.execute(t.getUnderEqualsMethod,
                     state.put(ScSubstitutor.key, n.substitutor followed subst))) return false
-                case _ =>
-              }
-            }
-
-            if (checkSyntheticName(elem.name)) {
-              def process(method: PsiMethod): Boolean = {
-                if (processValsForScala &&
-                        !processor.execute(method,
-                          state.put(ScSubstitutor.key, n.substitutor followed subst))) return false
-                true
-              }
-              elem match {
-                case t: ScTypedDefinition =>
-                  MacroAnnotations.getSyntheticCreatorsFor(elem).filter {
-                    case creator => openapi.util.text.StringUtil.equals(creator.transformedName(elem.getName), decodedName)
-                  } foreach {
-                    case creator if !process(t.getSyntheticMember(creator)) => return false
-                    case _ =>
-                  }
-                  if (decodedName.isEmpty) {
-                    //completion processor    a
-                    t.getSynthetics.foreach {
-                      case method if !process(method) => return false
-                      case _ =>
-                    }
-                  }
                 case _ =>
               }
             }

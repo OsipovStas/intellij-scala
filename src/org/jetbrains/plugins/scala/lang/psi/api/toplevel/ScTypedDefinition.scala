@@ -12,9 +12,6 @@ import com.intellij.psi.{PsiElement, PsiClass, PsiMethod}
 import com.intellij.util.containers.ConcurrentHashMap
 import light.{PsiClassWrapper, StaticPsiTypedDefinitionWrapper, PsiTypedDefinitionWrapper}
 import extensions.toSeqExt
-import org.jetbrains.plugins.scala.lang.psi.api.annotations.{SyntheticMemberCreator, MacroAnnotations}
-import org.jetbrains.plugins.scala.lang.psi.api.annotations.beans.BeanMacroGenerator.GetterCreator
-import org.jetbrains.plugins.scala.lang.psi.api.annotations.beans.BooleanBeanMacroGenerator
 
 /**
  * Member definitions, classes, named patterns which have types
@@ -33,14 +30,6 @@ trait ScTypedDefinition extends ScNamedElement with TypingContextOwner {
   private var underEqualsModCount: Long = 0L
 
 
-  @volatile
-  private var cachedMethodsMap: Map[SyntheticMemberCreator, (PsiMethod, Long)] = Map()
-
-  @volatile
-  private var syntheticMethodsCache: Seq[PsiMethod] = null
-
-  @volatile
-  private var modCount: Long = 0L
 
 
 
@@ -64,19 +53,6 @@ trait ScTypedDefinition extends ScNamedElement with TypingContextOwner {
     underEqualsModCount = curModCount
     underEqualsMethodsCache = res
     res
-  }
-
-  def getSynthetics: Seq[PsiMethod] = {
-    val curModCount = getManager.getModificationTracker.getOutOfCodeBlockModificationCount
-    if(syntheticMethodsCache != null && curModCount == modCount) syntheticMethodsCache
-    else {
-      val res: Seq[PsiMethod] = MacroAnnotations.getSyntheticCreatorsFor(this).map {
-        case creator => getSyntheticMember(creator)
-      }
-      modCount = curModCount
-      syntheticMethodsCache = res
-      res
-    }
   }
 
 
@@ -114,18 +90,6 @@ trait ScTypedDefinition extends ScNamedElement with TypingContextOwner {
   def nameContext: PsiElement = ScalaPsiUtil.nameContext(this)
   def isVar: Boolean = false
   def isVal: Boolean = false
-
-  def getSyntheticMember(creator: SyntheticMemberCreator): PsiMethod = {
-    val curModCount = getManager.getModificationTracker.getOutOfCodeBlockModificationCount
-    cachedMethodsMap.get(creator) match {
-      case Some(v) if v._2 == curModCount =>
-        v._1
-      case _ =>
-        val v = (creator.createMember(this), curModCount)
-        cachedMethodsMap = cachedMethodsMap.updated(creator, v)
-        v._1
-    }
-  }
 
 
 }

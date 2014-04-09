@@ -1,13 +1,7 @@
 package org.jetbrains.plugins.scala
 package lang.psi.api.annotations.typedef
 
-import org.jetbrains.plugins.scala.lang.psi.api.annotations.MacroAnnotations
-import com.intellij.psi.PsiMethod
-import org.jetbrains.plugins.scala.lang.psi.types._
 import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScFunction, ScAnnotationsHolder}
-import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
-import org.jetbrains.plugins.scala.lang.psi.api.expr.ScAnnotation
-import scala.beans.BeanProperty
 import org.jetbrains.plugins.scala.lang.psi.api.annotations.dsl.AnnotationHolder
 import org.jetbrains.plugins.scala.lang.psi.api.annotations.base.{SyntheticAnnotations, FakeCreator}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScMember

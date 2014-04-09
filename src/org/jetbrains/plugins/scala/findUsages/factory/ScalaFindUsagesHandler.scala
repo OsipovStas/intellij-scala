@@ -3,7 +3,6 @@ package org.jetbrains.plugins.scala.findUsages.factory
 import com.intellij.find.findUsages.{AbstractFindUsagesDialog, FindUsagesOptions, FindUsagesHandler}
 import com.intellij.psi.{PsiClass, PsiNamedElement, PsiElement}
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
-import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScTypedDefinition
 import org.jetbrains.plugins.scala.extensions.toPsiNamedElementExt
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScTypeDefinition, ScClass, ScTrait, ScObject}
@@ -19,7 +18,6 @@ import org.jetbrains.plugins.scala.util.ScalaUtil
 import scala.Array
 import org.jetbrains.plugins.scala.lang.psi.impl.search.ScalaOverridingMemberSearcher
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScPrimaryConstructor
-import org.jetbrains.plugins.scala.lang.psi.api.annotations.MacroAnnotations
 import org.jetbrains.plugins.scala.lang.psi.api.annotations.typedef.SyntheticOwner
 import org.jetbrains.plugins.scala.lang.psi.api.annotations.base.SyntheticAnnotations
 
@@ -50,19 +48,6 @@ class ScalaFindUsagesHandler(element: PsiElement) extends FindUsagesHandler(elem
         val name = named.name
         result.add(name)
         ScalaPsiUtil.nameContext(named) match {
-          case v: ScValue if ScalaPsiUtil.isBeanProperty(v) =>
-            result.add("get" + StringUtil.capitalize(name))
-          case v: ScVariable if ScalaPsiUtil.isBeanProperty(v) =>
-            result.add("get" + StringUtil.capitalize(name))
-            result.add("set" + StringUtil.capitalize(name))
-          case v: ScValue if ScalaPsiUtil.isBooleanBeanProperty(v) =>
-            result.add("is" + StringUtil.capitalize(name))
-          case v: ScVariable if ScalaPsiUtil.isBooleanBeanProperty(v) =>
-            result.add("is" + StringUtil.capitalize(name))
-            result.add("set" + StringUtil.capitalize(name))
-          case _ =>
-        }
-        ScalaPsiUtil.nameContext(named) match {
           case owner: SyntheticOwner =>
             SyntheticAnnotations.getCreatorsFor(owner).foreach {
               case creator => result.add(creator.transformedName(name))
@@ -90,13 +75,10 @@ class ScalaFindUsagesHandler(element: PsiElement) extends FindUsagesHandler(elem
         }
       case t: ScTrait => Array(t.fakeCompanionClass)
       case t: ScTypedDefinition =>
-        val elements = t.getSynthetics.toArray[PsiElement] ++ MacroAnnotations.getSyntheticCreatorsFor(t).map {
-          case creator => t.getTypedDefinitionWrapper(isStatic = false, isInterface = false, role = creator.getRole, cClass = None)
-        }.toArray[PsiElement]
         t.nameContext match {
           case owner: SyntheticOwner =>
-            elements ++ owner.getSynthetics
-          case _ => elements
+            owner.getSynthetics.toArray
+          case _ => Array.empty
         }
       case _ => Array.empty
     }

@@ -1193,24 +1193,12 @@ object ScalaPsiUtil {
       if (withSelfType) TypeDefinitionMembers.getSelfTypeSignatures(clazz)
       else TypeDefinitionMembers.getSignatures(clazz)
     val sigs = signatures.forName(x.name)._1
-    var res: Seq[Signature] = (sigs.get(s): @unchecked) match {
+    val res: Seq[Signature] = (sigs.get(s): @unchecked) match {
       //partial match
       case Some(node) => node.supers.map {_.info}
       case None =>
         throw new RuntimeException(s"internal error: could not find val matching: \n${x.getText}\n\nin class: \n${clazz.getText}")
     }
-
-
-    val beanMethods = typed.getSynthetics
-    beanMethods.foreach {method =>
-      val sigs = TypeDefinitionMembers.getSignatures(clazz).forName(method.name)._1
-      (sigs.get(new PhysicalSignature(method, ScSubstitutor.empty)): @unchecked) match {
-        //partial match
-        case Some(node) => res ++= node.supers.map {_.info}
-        case None =>
-      }
-    }
-
     res
 
   }

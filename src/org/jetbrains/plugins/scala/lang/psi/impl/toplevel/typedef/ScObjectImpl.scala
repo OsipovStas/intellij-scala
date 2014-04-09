@@ -30,7 +30,6 @@ import extensions.toPsiMemberExt
 import collection.mutable
 import lang.resolve.processor.BaseProcessor
 import com.intellij.lang.java.lexer.JavaLexer
-import org.jetbrains.plugins.scala.lang.psi.api.annotations.MacroAnnotations
 
 /**
  * @author Alexander Podkhalyuzin
@@ -264,11 +263,6 @@ class ScObjectImpl extends ScTypeDefinitionImpl with ScObject with ScTemplateDef
               if (t.isVar) {
                 res += t.getTypedDefinitionWrapper(isStatic = false, isInterface = isInterface, role = EQ, cClass = cClass)
               }
-            }
-            MacroAnnotations.getSyntheticCreatorsFor(t).foreach {
-              case creator if nodeName == creator.transformedName(t.name) =>
-                res += t.getTypedDefinitionWrapper(isStatic = false, isInterface = isInterface, role = creator.getRole, cClass = cClass)
-              case _ =>
             }
           case _ =>
         }
