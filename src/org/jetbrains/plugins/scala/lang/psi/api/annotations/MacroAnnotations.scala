@@ -2,7 +2,7 @@ package org.jetbrains.plugins.scala
 package lang.psi.api.annotations
 
 import com.intellij.psi.PsiNamedElement
-import org.jetbrains.plugins.scala.lang.psi.api.annotations.beans.{BooleanBeanMacroGenerator, BeanMacroGenerator}
+import org.jetbrains.plugins.scala.lang.psi.api.annotations.beans.BooleanBeanMacroGenerator
 
 /**
  * @author stasstels
@@ -31,6 +31,6 @@ object MacroAnnotations {
   }
 
 
-  val generators: Seq[MacroGenerator] = Seq(BeanMacroGenerator, BooleanBeanMacroGenerator)
+  val generators: Seq[MacroGenerator] = Seq()
 
 }

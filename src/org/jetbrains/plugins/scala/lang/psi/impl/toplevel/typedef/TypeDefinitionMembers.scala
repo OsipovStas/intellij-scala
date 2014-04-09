@@ -28,6 +28,7 @@ import extensions.toPsiNamedElementExt
 import caches.CachesUtil.MyOptionalProvider
 import org.jetbrains.plugins.scala.lang.psi.api.annotations.MacroAnnotations
 import com.intellij.openapi
+import org.jetbrains.plugins.scala.lang.psi.api.annotations.typedef.SyntheticOwner
 
 /**
  * @author ven
@@ -127,6 +128,7 @@ object TypeDefinitionMembers {
         map addToMap (s, new Node(s, subst))
       }
 
+
       for (member <- template.members) {
         member match {
           case _var: ScVariable if isBridge(place, _var) =>
@@ -158,6 +160,14 @@ object TypeDefinitionMembers {
             addSignature(new Signature(o.name, Stream.empty, 0, subst, Some(o)))
           case o: ScObject if (isBridge(place, o)) =>
             addSignature(new Signature(o.name, Stream.empty, 0, subst, Some(o)))
+          case _ =>
+        }
+        member match {
+          case owner: SyntheticOwner =>
+            owner.getSynthetics.foreach {
+              case m  if m.parameters.length == 0 => addSignature(new PhysicalSignature(m, subst))
+              case _ =>
+            }
           case _ =>
         }
       }
@@ -338,6 +348,7 @@ object TypeDefinitionMembers {
         map addToMap (s, new Node(s, subst))
       }
 
+
       for (member <- template.members) {
         member match {
           case _var: ScVariable if isBridge(place, _var) =>
@@ -386,6 +397,15 @@ object TypeDefinitionMembers {
             addSignature(new Signature(o.name, Stream.empty, 0, subst, Some(o)))
           case _ =>
         }
+
+        member match {
+          case owner: SyntheticOwner =>
+            owner.getSynthetics.map {
+              case m => addSignature(new PhysicalSignature(m, subst))
+            }
+          case _ =>
+        }
+
       }
 
       template match {
@@ -719,15 +739,14 @@ object TypeDefinitionMembers {
             }
 
             if (checkSyntheticName(elem.name)) {
+              def process(method: PsiMethod): Boolean = {
+                if (processValsForScala &&
+                        !processor.execute(method,
+                          state.put(ScSubstitutor.key, n.substitutor followed subst))) return false
+                true
+              }
               elem match {
                 case t: ScTypedDefinition =>
-                  def process(method: PsiMethod): Boolean = {
-                    if (processValsForScala &&
-                      !processor.execute(method,
-                        state.put(ScSubstitutor.key, n.substitutor followed subst))) return false
-                    true
-                  }
-
                   MacroAnnotations.getSyntheticCreatorsFor(elem).filter {
                     case creator => openapi.util.text.StringUtil.equals(creator.transformedName(elem.getName), decodedName)
                   } foreach {
@@ -749,8 +768,6 @@ object TypeDefinitionMembers {
           }
           true
         }
-
-
 
         if (decodedName != "") {
           def checkList(s: String): Boolean = {

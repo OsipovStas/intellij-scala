@@ -38,9 +38,11 @@ object SyntheticGenerator {
 
     override val creators: Seq[SyntheticCreators] = macros.definitions.map(SyntheticCreators(_))
 
-    override def checkAnnotation(holder: SyntheticOwner): Boolean = holder.annotationNames.exists {
+    override def checkAnnotation(holder: SyntheticOwner): Boolean = holder.annotations.exists {
       case hAnnot => macros.annotations.exists {
-        case checkAnnot => text.StringUtil.endsWith(checkAnnot, hAnnot)
+        case checkAnnot =>
+          val annotText = hAnnot.typeElement.getText.replace(" ", "")
+          text.StringUtil.equals(checkAnnot, annotText)  || text.StringUtil.endsWith(checkAnnot, "." + annotText)
       }
     }
 

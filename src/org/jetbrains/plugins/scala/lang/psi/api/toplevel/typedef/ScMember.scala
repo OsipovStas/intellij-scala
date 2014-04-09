@@ -35,6 +35,8 @@ trait ScMember extends ScalaPsiElement with ScModifierListOwner with PsiMember {
 
   def isInstance: Boolean = !isLocal
 
+
+
   /**
     * getContainingClassStrict(bar) == null in
     *
@@ -84,6 +86,12 @@ trait ScMember extends ScalaPsiElement with ScModifierListOwner with PsiMember {
             case _ =>
           }
         }
+        case c: ScTypeDefinition =>
+          this match {
+            case fun: ScFunction if fun.isSynthetic && !c.hasModifierProperty("implicit") =>
+              return c
+            case _ =>
+          }
         case _ =>
       }
       PsiTreeUtil.getContextOfType(this, true, classOf[ScTemplateDefinition])

@@ -8,7 +8,7 @@ import expr.ScBlock
 import javax.swing.Icon
 import toplevel.templates.ScExtendsBlock
 import toplevel.ScTypedDefinition
-import types.ScType
+import org.jetbrains.plugins.scala.lang.psi.types.{Any, ScType}
 import toplevel.typedef._
 import base.types.ScTypeElement
 import expr.ScBlockStatement
@@ -16,12 +16,14 @@ import icons.Icons
 import types.result.{TypeResult, TypingContext, Success}
 import com.intellij.psi.PsiElement
 import lexer.ScalaTokenTypes
+import org.jetbrains.plugins.scala.lang.psi.api.annotations.typedef.SyntheticOwner
+import org.jetbrains.plugins.scala.lang.psi.api.annotations.dsl.{DefinitionsHolder, ValueHolder, AnnotationHolder}
 
 /**
  * @author Alexander Podkhalyuzin
  */
 
-trait ScValue extends ScBlockStatement with ScMember with ScDocCommentOwner with ScDeclaredElementsHolder with ScAnnotationsHolder {
+trait ScValue extends ScBlockStatement with ScMember with ScDocCommentOwner with ScDeclaredElementsHolder with ScAnnotationsHolder with SyntheticOwner {
   self =>
   def valKeyword = findChildrenByType(ScalaTokenTypes.kVAL).apply(0)
 
@@ -66,4 +68,17 @@ trait ScValue extends ScBlockStatement with ScMember with ScDocCommentOwner with
   def getValToken: PsiElement = findFirstChildByType(ScalaTokenTypes.kVAL)
 
   override def isDeprecated = hasAnnotation("scala.deprecated") != None || hasAnnotation("java.lang.Deprecated") != None
+
+  override def asAnnotationHolder: AnnotationHolder = new ValueHolder {
+
+    override def getContainingClass: Option[DefinitionsHolder] = Option(containingClass).map(_ => new DefinitionsHolder {})
+
+    override def getName: String = declaredElements.headOption.map(_.getName).getOrElse("")
+
+    override def getType: String = {
+
+      typeElement.map(_.getText).getOrElse(Any.presentableText)
+
+    }
+  }
 }

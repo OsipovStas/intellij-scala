@@ -26,6 +26,8 @@ import com.intellij.openapi.util.Pass
 import java.util
 import org.jetbrains.plugins.scala.lang.refactoring.util.ScalaNamesUtil
 import org.jetbrains.plugins.scala.lang.psi.api.annotations.MacroAnnotations
+import org.jetbrains.plugins.scala.lang.psi.api.annotations.typedef.SyntheticOwner
+import org.jetbrains.plugins.scala.lang.psi.api.annotations.base.SyntheticAnnotations
 
 /**
  * User: Alexander Podkhalyuzin
@@ -51,6 +53,13 @@ class RenameScalaValsProcessor extends RenameJavaMemberProcessor {
         case t: ScTypedDefinition =>
           MacroAnnotations.getSyntheticCreatorsFor(t).foreach {
             case creator => allRenames.put(t.getSyntheticMember(creator), creator.transformedName(newName))
+          }
+          t.nameContext match {
+            case owner: SyntheticOwner =>
+              SyntheticAnnotations.getCreatorsFor(owner).foreach {
+                case creator => allRenames.put(owner.getSyntheticMember(creator), creator.transformedName(newName))
+              }
+            case _ =>
           }
           t.nameContext match {
             case member: ScMember if member.containingClass != null =>

@@ -20,6 +20,8 @@ import scala.Array
 import org.jetbrains.plugins.scala.lang.psi.impl.search.ScalaOverridingMemberSearcher
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScPrimaryConstructor
 import org.jetbrains.plugins.scala.lang.psi.api.annotations.MacroAnnotations
+import org.jetbrains.plugins.scala.lang.psi.api.annotations.typedef.SyntheticOwner
+import org.jetbrains.plugins.scala.lang.psi.api.annotations.base.SyntheticAnnotations
 
 /**
  * User: Alexander Podkhalyuzin
@@ -60,6 +62,13 @@ class ScalaFindUsagesHandler(element: PsiElement) extends FindUsagesHandler(elem
             result.add("set" + StringUtil.capitalize(name))
           case _ =>
         }
+        ScalaPsiUtil.nameContext(named) match {
+          case owner: SyntheticOwner =>
+            SyntheticAnnotations.getCreatorsFor(owner).foreach {
+              case creator => result.add(creator.transformedName(name))
+            }
+          case _ =>
+        }
       case _ => result.add(element.getText)
     }
     result
@@ -81,9 +90,14 @@ class ScalaFindUsagesHandler(element: PsiElement) extends FindUsagesHandler(elem
         }
       case t: ScTrait => Array(t.fakeCompanionClass)
       case t: ScTypedDefinition =>
-        t.getSynthetics.toArray[PsiElement] ++ MacroAnnotations.getSyntheticCreatorsFor(t).map {
+        val elements = t.getSynthetics.toArray[PsiElement] ++ MacroAnnotations.getSyntheticCreatorsFor(t).map {
           case creator => t.getTypedDefinitionWrapper(isStatic = false, isInterface = false, role = creator.getRole, cClass = None)
         }.toArray[PsiElement]
+        t.nameContext match {
+          case owner: SyntheticOwner =>
+            elements ++ owner.getSynthetics
+          case _ => elements
+        }
       case _ => Array.empty
     }
   }

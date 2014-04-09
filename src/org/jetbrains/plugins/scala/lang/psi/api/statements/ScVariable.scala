@@ -7,20 +7,22 @@ package statements
 import expr.{ScBlock, ScBlockStatement}
 import javax.swing.Icon
 import toplevel.templates.ScExtendsBlock
-import toplevel.{ScTypedDefinition}
-import types.ScType
+import toplevel.ScTypedDefinition
+import org.jetbrains.plugins.scala.lang.psi.types.{Any, ScType}
 import toplevel.typedef._
 import base.types.ScTypeElement
 import icons.Icons
 import types.result.{TypingContext, TypeResult}
 import com.intellij.psi.PsiElement
 import lexer.ScalaTokenTypes
+import org.jetbrains.plugins.scala.lang.psi.api.annotations.typedef.SyntheticOwner
+import org.jetbrains.plugins.scala.lang.psi.api.annotations.dsl.{VarHolder, DefinitionsHolder, AnnotationHolder}
 
 /**
  * @author Alexander Podkhalyuzin
  */
 
-trait ScVariable extends ScBlockStatement with ScMember with ScDocCommentOwner with ScDeclaredElementsHolder with ScAnnotationsHolder {
+trait ScVariable extends ScBlockStatement with ScMember with ScDocCommentOwner with ScDeclaredElementsHolder with ScAnnotationsHolder with SyntheticOwner {
   self =>
   def varKeyword = findChildrenByType(ScalaTokenTypes.kVAR).apply(0)
 
@@ -59,4 +61,17 @@ trait ScVariable extends ScBlockStatement with ScMember with ScDocCommentOwner w
 
   override def isDeprecated =
     hasAnnotation("scala.deprecated") != None || hasAnnotation("java.lang.Deprecated") != None
+
+  override def asAnnotationHolder: AnnotationHolder =  new VarHolder {
+
+    override def getContainingClass: Option[DefinitionsHolder] = Option(containingClass).map(_ => new DefinitionsHolder {})
+
+    override def getName: String = declaredElements.headOption.map(_.getName).getOrElse("")
+
+    override def getType: String = {
+
+      typeElement.map(_.getText).getOrElse(Any.presentableText)
+
+    }
+  }
 }
