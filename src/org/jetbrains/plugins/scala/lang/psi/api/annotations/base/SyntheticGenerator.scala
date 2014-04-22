@@ -28,6 +28,7 @@ object SyntheticGenerator {
 
 
   object SyntheticCreators {
+
     def apply(defs: SyntheticDefinitions): SyntheticCreators = SyntheticCreators(
       predicate = defs.owner(_).isDefined,
       creators = defs.members.map(FakeCreator(_))

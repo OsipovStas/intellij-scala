@@ -40,22 +40,6 @@ trait FakeCreator {
 
 object FakeCreator {
 
-  implicit def arr2arr(a: Array[ScType]): Array[Parameter] = a.toSeq.mapWithIndex {
-    case (tpe, index) => new Parameter("", None, tpe, false, false, false, index)
-  }.toArray
-
-  private class SyntheticPsiMethod(navElement: PsiElement,
-                                   name: String,
-                                   params: Array[Parameter],
-                                   retType: ScType,
-                                   hasModifier: String => Boolean) extends FakePsiMethod(navElement, name, params, retType, hasModifier) {
-
-
-    override def getIcon(flags: Int): Icon = {
-      Icons.FUNCTION
-    }
-  }
-
   import org.jetbrains.plugins.scala.lang.psi.api.annotations.dsl.MacroAnnotation._
 
   def apply(m: Method) = new FakeCreator {

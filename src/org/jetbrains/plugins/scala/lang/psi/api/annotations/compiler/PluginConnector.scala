@@ -17,6 +17,7 @@ import org.jetbrains.plugins.scala.compiler.CompileServerLauncher
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.plugins.scala.lang.psi.api.annotations.compiler.MacroCompiler.MacroCompilerTask
 import com.intellij.openapi.application.ApplicationManager
+import org.jetbrains.plugins.scala.lang.psi.api.annotations.base.SyntheticAnnotations
 
 /**
  * @author stasstels
@@ -42,12 +43,11 @@ class PluginConnector(template: ScalaFile) {
     ApplicationManager.getApplication.invokeLater {
       new Runnable {
         override def run(): Unit = {
-          template.typeDefinitions.map(_.getQualifiedName).filter(_ != null).foreach {
+          val macroAnnotations = template.typeDefinitions.map(_.getQualifiedName).filter(_ != null).flatMap {
             case name =>
-              val ma = MacroAnnotationLoadFactory.newInstance(name, CompilerParameters.getClasspath(template.getProject) :+ MacroCompiler.out)
-              println(s"Loaded $ma")
+              MacroAnnotationLoadFactory.newInstance(name, CompilerParameters.getClasspath(template.getProject) :+ MacroCompiler.out)
           }
-          println("loaded")
+          SyntheticAnnotations.register(macroAnnotations)
         }
       }
     }

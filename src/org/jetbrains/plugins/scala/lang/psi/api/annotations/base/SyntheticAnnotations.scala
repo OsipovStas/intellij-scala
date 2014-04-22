@@ -2,8 +2,7 @@ package org.jetbrains.plugins.scala
 package lang.psi.api.annotations.base
 
 import org.jetbrains.plugins.scala.lang.psi.api.annotations.typedef.SyntheticOwner
-import org.jetbrains.plugins.scala.lang.psi.api.annotations.dsl.{BooleanBeans, Beans}
-import org.jetbrains.plugins.scala.lang.psi.api.annotations.dsl.MacroAnnotation.SyntheticDefinitions
+import org.jetbrains.plugins.scala.lang.psi.api.annotations.dsl.{BooleanBeans, Beans, MacroAnnotation}
 
 /**
  * @author stasstels
@@ -13,13 +12,17 @@ object SyntheticAnnotations {
 
   def getCreatorsFor(owner: SyntheticOwner) = generators.filter(_.checkAnnotation(owner)).flatMap(_.getSuitableCreators(owner))
 
-  def register(definitions: Seq[SyntheticDefinitions], annotations: Seq[String]) {
-    generators = beanGenerators :+ SyntheticGenerator(definitions, annotations)
+  def register(macroses: Seq[MacroAnnotation]) {
+    generators = beanPropertiesGenerators ++ macroses.map(SyntheticGenerator(_))
   }
 
-  val beanGenerators = Seq(SyntheticGenerator(Beans), SyntheticGenerator(BooleanBeans))
+  def unplug() = {
+    generators = beanPropertiesGenerators
+  }
 
-  var generators: Seq[SyntheticGenerator] = beanGenerators
+  val beanPropertiesGenerators: Seq[SyntheticGenerator] = Seq(SyntheticGenerator(Beans), SyntheticGenerator(BooleanBeans))
+
+  var generators = beanPropertiesGenerators
 
 }
 
