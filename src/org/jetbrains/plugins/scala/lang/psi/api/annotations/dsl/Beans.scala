@@ -1,13 +1,16 @@
 package org.jetbrains.plugins.scala
 package lang.psi.api.annotations.dsl
 
-import scala.beans.{BooleanBeanProperty, BeanProperty}
+import scala.beans.BooleanBeanProperty
+import scala.annotation.StaticAnnotation
 
 
 /**
  * @author stasstels
  * @since  3/30/14.
  */
+
+
 object Beans extends MacroAnnotation {
 
   import MacroAnnotation._
@@ -19,11 +22,12 @@ object Beans extends MacroAnnotation {
   )
 
   annotations = Seq(
-    new BeanProperty().getClass.getCanonicalName
+    new SyntheticBeanProperty().getClass.getCanonicalName
   )
 
 }
 
+class SyntheticBeanProperty() extends StaticAnnotation
 
 object BooleanBeans extends MacroAnnotation {
 

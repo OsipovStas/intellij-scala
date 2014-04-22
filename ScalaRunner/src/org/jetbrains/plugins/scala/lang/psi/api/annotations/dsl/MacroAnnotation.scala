@@ -1,6 +1,4 @@
-package org.jetbrains.plugins.scala
-package lang.psi.api.annotations.dsl
-
+package org.jetbrains.plugins.scala.lang.psi.api.annotations.dsl
 
 /**
  * @author stasstels
@@ -16,19 +14,19 @@ object MacroAnnotation {
 
   implicit class RichOptCtx[T <: AnnotationHolder](val ctxValue: OptCtx[T]) extends AnyVal {
 
-    def asValue: OptCtx[ValueHolder] = ctxValue andThen(_.flatMap {
+    def asValue: OptCtx[ValueHolder] = ctxValue andThen (_.flatMap {
       case v: ValueHolder => Some(v)
       case _ => None
     })
 
 
-    def asVariable: OptCtx[VarHolder] = ctxValue andThen(_.flatMap {
+    def asVariable: OptCtx[VarHolder] = ctxValue andThen (_.flatMap {
       case v: VarHolder => Some(v)
       case _ => None
     })
 
 
-    def getContainingClass: OptCtx[DefinitionsHolder] = ctxValue andThen(_.flatMap(_.getContainingClass))
+    def getContainingClass: OptCtx[DefinitionsHolder] = ctxValue andThen (_.flatMap(_.getContainingClass))
 
   }
 
@@ -76,7 +74,7 @@ object MacroAnnotation {
 
 }
 
-trait MacroAnnotation {
+class MacroAnnotation {
 
   import MacroAnnotation._
 

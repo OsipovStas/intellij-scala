@@ -7,7 +7,7 @@ import com.intellij.psi.impl.source.PsiFileWithStubSupport
 import toplevel.packaging.ScPackaging
 import toplevel.ScToplevelElement
 import org.jetbrains.annotations.Nullable
-import com.intellij.psi.{PsiClassOwnerEx, PsiClassOwner, PsiImportHolder, PsiClass}
+import com.intellij.psi.{PsiClassOwnerEx, PsiImportHolder, PsiClass}
 import com.intellij.openapi.util.TextRange
 
 /**
@@ -15,7 +15,7 @@ import com.intellij.openapi.util.TextRange
  */
 
 trait ScalaFile extends ScalaPsiElement with ScToplevelElement with PsiClassOwnerEx with ScDeclarationSequenceHolder
-    with PsiImportHolder with ScImportsHolder with PsiFileWithStubSupport {
+with PsiImportHolder with ScImportsHolder with PsiFileWithStubSupport {
 
   @Deprecated
   def importClass(aClass: PsiClass): Boolean = {
@@ -39,4 +39,6 @@ trait ScalaFile extends ScalaPsiElement with ScToplevelElement with PsiClassOwne
   def isScriptFile(withCashing: Boolean = true): Boolean
 
   def isWorksheetFile: Boolean
+
+  def isScamFile: Boolean = false
 }

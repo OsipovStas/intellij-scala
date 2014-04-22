@@ -1,6 +1,4 @@
-package org.jetbrains.plugins.scala
-package lang.psi.api.annotations.dsl
-
+package org.jetbrains.plugins.scala.lang.psi.api.annotations.dsl
 
 /**
  * @author stasstels

@@ -17,7 +17,7 @@ import types.result.{TypeResult, TypingContext, Success}
 import com.intellij.psi.PsiElement
 import lexer.ScalaTokenTypes
 import org.jetbrains.plugins.scala.lang.psi.api.annotations.typedef.SyntheticOwner
-import org.jetbrains.plugins.scala.lang.psi.api.annotations.dsl.{DefinitionsHolder, ValueHolder, AnnotationHolder}
+import org.jetbrains.plugins.scala.lang.psi.api.annotations.dsl.{AnnotationHolder, ValueHolder, DefinitionsHolder}
 
 /**
  * @author Alexander Podkhalyuzin

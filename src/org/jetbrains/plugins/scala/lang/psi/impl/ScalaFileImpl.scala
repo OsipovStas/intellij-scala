@@ -40,18 +40,12 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.openapi.fileTypes.LanguageFileType
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.imports.ScImportStmt
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
-import com.intellij.openapi.application.ex.ApplicationEx
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import javax.swing.SwingUtilities
 import com.intellij.util.Processor
 
 class ScalaFileImpl(viewProvider: FileViewProvider, fileType: LanguageFileType = ScalaFileType.SCALA_FILE_TYPE)
         extends PsiFileBase(viewProvider, fileType.getLanguage)
-                with ScalaFile with FileDeclarationsHolder 
-                with CompiledFileAdjuster with ScControlFlowOwner with FileResolveScopeProvider {
+        with ScalaFile with FileDeclarationsHolder
+        with CompiledFileAdjuster with ScControlFlowOwner with FileResolveScopeProvider {
   override def getViewProvider = viewProvider
 
   override def getFileType = fileType
@@ -195,6 +189,10 @@ class ScalaFileImpl(viewProvider: FileViewProvider, fileType: LanguageFileType =
     this.getVirtualFile != null && this.getVirtualFile.getExtension == ScalaFileType.WORKSHEET_EXTENSION
   }
 
+
+  override def isScamFile: Boolean = {
+    this.getVirtualFile != null && this.getVirtualFile.getExtension == ScalaFileType.MACRO_ANNOTATION_FILE_EXTENSION
+  }
 
   def setPackageName(name: String) {
     val basePackageName = Option(ScalaPsiUtil.getModule(this))
@@ -365,16 +363,16 @@ class ScalaFileImpl(viewProvider: FileViewProvider, fileType: LanguageFileType =
   protected def isScalaPredefinedClass = {
     def inner(file: ScalaFile): java.lang.Boolean = {
       java.lang.Boolean.valueOf(file.typeDefinitions.length == 1 &&
-        Set("scala", "scala.Predef").contains(file.typeDefinitions.apply(0).qualifiedName))
+              Set("scala", "scala.Predef").contains(file.typeDefinitions.apply(0).qualifiedName))
     }
     CachesUtil.get[ScalaFile, java.lang.Boolean](this, CachesUtil.SCALA_PREDEFINED_KEY,
       new CachesUtil.MyProvider[ScalaFile, java.lang.Boolean](this, e => inner(e))
       (PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT)).booleanValue()
-  } 
-  
-  
+  }
+
+
   def isScalaPredefinedClassInner = typeDefinitions.length == 1 &&
-    Set("scala", "scala.Predef").contains(typeDefinitions.apply(0).qualifiedName)
+          Set("scala", "scala.Predef").contains(typeDefinitions.apply(0).qualifiedName)
 
 
   override def findReferenceAt(offset: Int): PsiReference = super.findReferenceAt(offset)
@@ -400,8 +398,8 @@ class ScalaFileImpl(viewProvider: FileViewProvider, fileType: LanguageFileType =
           case _ =>
         }
       case t: ScTrait =>
-      res.add(t.getName)
-      res.add(t.fakeCompanionClass.getName)
+        res.add(t.getName)
+        res.add(t.fakeCompanionClass.getName)
     }
     res
   }
@@ -494,7 +492,8 @@ object ScalaFileImpl {
     path.scanLeft(List[String]())((vs, v) => vs ::: v).tail.dropRight(1)
 
   def splitAt(path: List[List[String]], vector: List[String]): List[List[String]] = {
-    if (vector.isEmpty) path else path match {
+    if (vector.isEmpty) path
+    else path match {
       case h :: t if h == vector => h :: t
       case h :: t if vector.startsWith(h) => h :: splitAt(t, vector.drop(h.size))
       case h :: t if h.startsWith(vector) => h.take(vector.size) :: h.drop(vector.size) :: t

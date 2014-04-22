@@ -36,9 +36,15 @@ public class ScalaFileType extends LanguageFileType {
 
   public static final ScalaFileType SCALA_FILE_TYPE = new ScalaFileType();
   public static final Language SCALA_LANGUAGE = SCALA_FILE_TYPE.getLanguage();
-  @NonNls public static final String DEFAULT_EXTENSION = "scala";
-  @NonNls public static final String WORKSHEET_EXTENSION = "sc";
-  @NonNls public static final String SBT_FILE_EXTENSION = "sbt";
+  @NonNls
+  public static final String DEFAULT_EXTENSION = "scala";
+  @NonNls
+  public static final String WORKSHEET_EXTENSION = "sc";
+  @NonNls
+  public static final String SBT_FILE_EXTENSION = "sbt";
+  @NonNls
+  public static final String MACRO_ANNOTATION_FILE_EXTENSION = "scam";
+
 
   private ScalaFileType() {
     super(new ScalaLanguage());
@@ -68,7 +74,7 @@ public class ScalaFileType extends LanguageFileType {
   }
 
   public Icon getIcon() {
-     return Icons.FILE_TYPE_LOGO;
+    return Icons.FILE_TYPE_LOGO;
   }
 
   public boolean isJVMDebuggingSupported() {

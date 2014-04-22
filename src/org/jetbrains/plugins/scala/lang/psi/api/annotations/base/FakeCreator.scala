@@ -13,18 +13,16 @@ import extensions.toSeqExt
 import javax.swing.Icon
 import org.jetbrains.plugins.scala.icons.Icons
 import org.jetbrains.plugins.scala.lang.psi.types.nonvalue.Parameter
-import org.jetbrains.plugins.scala.lang.psi.api.annotations.dsl.MacroAnnotation.Method
-import org.jetbrains.plugins.scala.lang.psi.api.annotations.dsl.AnnotationHolder
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory
 import org.jetbrains.plugins.scala.lang.psi.api.annotations.SyntheticUtils
+import org.jetbrains.plugins.scala.lang.psi.api.annotations.dsl.AnnotationHolder
 
 /**
  * @author stasstels
  * @since  4/2/14.
  */
 trait FakeCreator {
-
 
 
   def transformedName(owner: String): String
@@ -53,13 +51,12 @@ object FakeCreator {
                                    hasModifier: String => Boolean) extends FakePsiMethod(navElement, name, params, retType, hasModifier) {
 
 
-
-
     override def getIcon(flags: Int): Icon = {
       Icons.FUNCTION
     }
   }
 
+  import org.jetbrains.plugins.scala.lang.psi.api.annotations.dsl.MacroAnnotation._
 
   def apply(m: Method) = new FakeCreator {
 
@@ -84,7 +81,6 @@ object FakeCreator {
 
     override def transformedName(baseName: String): String = m.name(baseName)
   }
-
 
 
 }

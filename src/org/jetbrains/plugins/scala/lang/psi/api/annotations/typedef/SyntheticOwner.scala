@@ -2,11 +2,11 @@ package org.jetbrains.plugins.scala
 package lang.psi.api.annotations.typedef
 
 import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScFunction, ScAnnotationsHolder}
-import org.jetbrains.plugins.scala.lang.psi.api.annotations.dsl.AnnotationHolder
 import org.jetbrains.plugins.scala.lang.psi.api.annotations.base.{SyntheticAnnotations, FakeCreator}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScMember
 import scala.Long
 import scala.Some
+import org.jetbrains.plugins.scala.lang.psi.api.annotations.dsl.AnnotationHolder
 
 /**
  * @author stasstels

@@ -16,7 +16,7 @@ import types.result.{TypingContext, TypeResult}
 import com.intellij.psi.PsiElement
 import lexer.ScalaTokenTypes
 import org.jetbrains.plugins.scala.lang.psi.api.annotations.typedef.SyntheticOwner
-import org.jetbrains.plugins.scala.lang.psi.api.annotations.dsl.{VarHolder, DefinitionsHolder, AnnotationHolder}
+import org.jetbrains.plugins.scala.lang.psi.api.annotations.dsl.{AnnotationHolder, VarHolder, DefinitionsHolder}
 
 /**
  * @author Alexander Podkhalyuzin
@@ -45,6 +45,7 @@ trait ScVariable extends ScBlockStatement with ScMember with ScDocCommentOwner w
       false
     case _ => false
   }
+
   override def getIcon(flags: Int): Icon = {
     var parent = getParent
     while (parent != null) {
@@ -62,7 +63,7 @@ trait ScVariable extends ScBlockStatement with ScMember with ScDocCommentOwner w
   override def isDeprecated =
     hasAnnotation("scala.deprecated") != None || hasAnnotation("java.lang.Deprecated") != None
 
-  override def asAnnotationHolder: AnnotationHolder =  new VarHolder {
+  override def asAnnotationHolder: AnnotationHolder = new VarHolder {
 
     override def getContainingClass: Option[DefinitionsHolder] = Option(containingClass).map(_ => new DefinitionsHolder {})
 
