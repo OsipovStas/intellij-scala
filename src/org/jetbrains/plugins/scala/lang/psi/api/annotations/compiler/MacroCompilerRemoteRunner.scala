@@ -39,12 +39,7 @@ class MacroCompilerRemoteRunner(project: Project) extends RemoteResourceOwner {
         throw new IllegalArgumentException("Bad port: " + ScalaApplicationSettings.getInstance().COMPILE_SERVER_PORT, e)
     }
 
-  val projectClassPath = ModuleManager.getInstance(project).getModules.toSeq.flatMap {
-    case module => OrderEnumerator.orderEntries(module).compileOnly().getClassesRoots.toSeq map {
-      case f => new File(f.getCanonicalPath stripSuffix "!" stripSuffix "!/")
-    }
-  }
-
+  val projectClassPath = CompilerParameters.getClasspath(project)
 
   val libRoot: File = new File(PathUtil.getJarPathForClass(getClass)).getParentFile()
 
@@ -127,6 +122,16 @@ class MacroCompilerRemoteRunner(project: Project) extends RemoteResourceOwner {
     case Right(jdk) => jdk.executable
     case Left(msg) =>
       configurationError(s"Cannot find jdk ${settings.COMPILE_SERVER_SDK} for compile server, underlying message: $msg")
+  }
+
+}
+
+object CompilerParameters {
+
+  def getClasspath(p: Project) = ModuleManager.getInstance(p).getModules.toSeq.flatMap {
+    case module => OrderEnumerator.orderEntries(module).compileOnly().getClassesRoots.toSeq map {
+      case f => new File(f.getCanonicalPath stripSuffix "!" stripSuffix "!/")
+    }
   }
 
 }

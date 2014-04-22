@@ -44,7 +44,7 @@ class PluginConnector(template: ScalaFile) {
         override def run(): Unit = {
           template.typeDefinitions.map(_.getQualifiedName).filter(_ != null).foreach {
             case name =>
-              val ma = MacroAnnotationLoadFactory.newInstance(name, MacroCompiler.out)
+              val ma = MacroAnnotationLoadFactory.newInstance(name, CompilerParameters.getClasspath(template.getProject) :+ MacroCompiler.out)
               println(s"Loaded $ma")
           }
           println("loaded")
@@ -97,7 +97,7 @@ abstract class TaskClientAdapter(task: CompilerTask) extends Client {
 }
 
 
-class MacroAnnotationLoader(urls: Array[URL], parent: ClassLoader) extends URLClassLoader(urls, parent) {
+class MacroAnnotationLoader(urls: Seq[File], parent: ClassLoader) extends URLClassLoader(urls.map(_.toURI.toURL).toArray, parent) {
   override def loadClass(name: String): Class[_] = {
     Try(super.loadClass(name)).getOrElse {
       findClass(name)
@@ -108,9 +108,9 @@ class MacroAnnotationLoader(urls: Array[URL], parent: ClassLoader) extends URLCl
 
 object MacroAnnotationLoadFactory {
 
-  def newInstance(className: String, dir: File): Option[MacroAnnotation] = {
+  def newInstance(className: String, classpath: Seq[File]): Option[MacroAnnotation] = {
     val ru = reflect.runtime.universe
-    val rm = ru.runtimeMirror(new MacroAnnotationLoader(Array(dir.toURI.toURL), MacroAnnotation.getClass.getClassLoader))
+    val rm = ru.runtimeMirror(new MacroAnnotationLoader(classpath, MacroAnnotation.getClass.getClassLoader))
     Try(rm.staticClass(className)).flatMap {
       case clazz => Try(clazz.toType.declaration(ru.nme.CONSTRUCTOR).asMethod).flatMap {
         case constructor =>
