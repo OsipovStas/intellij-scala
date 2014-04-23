@@ -47,6 +47,11 @@ object MacroAnnotation {
 
     override def apply(v1: AnnotationHolder): Option[AnnotationHolder] = Some(v1)
 
+    def filter(f: AnnotationHolder => Boolean): OptCtx[AnnotationHolder] = {
+      case holder if f(holder) => Some(holder)
+      case _ => None
+    }
+
   }
 
   object Methods {
