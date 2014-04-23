@@ -12,11 +12,7 @@ import java.io.File
  */
 object MacroCompiler {
 
-  val out = {
-    val file = new File("/home/stasstels/ma")
-    FileUtil.createDirectory(file)
-    file
-  }
+  val out = FileUtil.createTempDirectory("macros", null, true)
 
 
   def runCompileTask(task: MacroCompilerTask) {
