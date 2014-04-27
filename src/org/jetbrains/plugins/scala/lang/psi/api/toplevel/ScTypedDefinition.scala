@@ -72,6 +72,33 @@ trait ScTypedDefinition extends ScNamedElement with TypingContextOwner {
     res
   }
 
+
+  @volatile
+  private var testing$$MethodsCache: PsiMethod = null
+  @volatile
+  private var testing$$Count: Long = 0L
+
+  def testing$$Method: PsiMethod = {
+    def inner(): PsiMethod = {
+      val hasModifierProperty: String => Boolean = nameContext match {
+        case v: ScModifierListOwner => v.hasModifierProperty _
+        case _ => _ => false
+      }
+      val tType = getType(TypingContext.empty).getOrAny
+      implicit def arr2arr(a: Array[ScType]): Array[Parameter] = a.toSeq.mapWithIndex {
+        case (tpe, index) => new Parameter("", None, tpe, false, false, false, index)
+      }.toArray
+      new FakePsiMethod(this, name + "test$$", Array[ScType](tType, tType), tType, hasModifierProperty)
+    }
+
+    val curModCount = getManager.getModificationTracker.getOutOfCodeBlockModificationCount
+    if (testing$$MethodsCache != null && testing$$Count == curModCount) return testing$$MethodsCache
+    val res = inner()
+    testing$$Count = curModCount
+    testing$$MethodsCache = res
+    res
+  }
+
   def getGetBeanMethod: PsiMethod = {
     def inner(): PsiMethod = {
       val hasModifierProperty: String => Boolean = nameContext match {

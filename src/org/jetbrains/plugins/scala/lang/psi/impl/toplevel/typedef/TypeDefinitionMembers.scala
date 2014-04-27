@@ -342,6 +342,7 @@ object TypeDefinitionMembers {
               lazy val t = dcl.getType(TypingContext.empty).getOrAny
               addSignature(new Signature(dcl.name, Stream.empty, 0, subst, dcl))
               addSignature(new Signature(dcl.name + "_=", ScalaPsiUtil.getSingletonStream(t), 1, subst, dcl))
+
               dcl.nameContext match {
                 case s: ScAnnotationsHolder =>
                   val beanProperty = ScalaPsiUtil.isBeanProperty(s, noResolve = true)
@@ -717,11 +718,16 @@ object TypeDefinitionMembers {
             if (processValsForScala && checkName(elem.name) &&
               !processor.execute(elem, state.put(ScSubstitutor.key, n.substitutor followed subst))) return false
 
-            if (name == null || name.isEmpty || checkName(s"${elem.name}_=")) {
+            if (name == null || name.isEmpty || checkName(s"${elem.name}_=") || checkName(s"${elem.name}test" + "$$")) {
               elem match {
                 case t: ScTypedDefinition if t.isVar && signature.name.endsWith("_=") =>
                   if (processValsForScala && !processor.execute(t.getUnderEqualsMethod,
                     state.put(ScSubstitutor.key, n.substitutor followed subst))) return false
+
+                case t: ScTypedDefinition if t.isVar && signature.name.endsWith("test$$") =>
+                  if (processValsForScala && !processor.execute(t.testing$$Method,
+                    state.put(ScSubstitutor.key, n.substitutor followed subst))) return false
+
                 case _ =>
               }
             }
