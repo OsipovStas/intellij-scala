@@ -4,14 +4,9 @@ package lang.psi.api.synthetics
 import javax.swing.Icon
 import com.intellij.openapi.util.IconLoader
 import com.intellij.util.PathUtil
-import org.jetbrains.plugins.scala.dsl.Member
-import com.intellij.openapi.vfs.{VfsUtilCore, VirtualFileManager, VirtualFile, VfsUtil}
-import java.io.File
-import com.intellij.psi.search.NonClasspathDirectoryScope
-import java.nio.file.{Paths, Files}
-import java.net.URL
-import com.intellij.openapi.vfs.newvfs.ManagingFS
-import com.intellij.util.indexing.AdditionalIndexedRootsScope
+import com.intellij.openapi.vfs.VfsUtil
+import java.nio.file.Paths
+import org.jetbrains.plugins.scala.dsl.tree.Empty
 
 /**
  * @author stasstels
@@ -29,7 +24,7 @@ object DSL {
 
   val Name: String = "Scam"
 
-  lazy val dslJarUrl = VfsUtil.getUrlForLibraryRoot(Paths.get(PathUtil.getJarPathForClass(Member.getClass)).toFile)
+  lazy val dslJarUrl = VfsUtil.getUrlForLibraryRoot(Paths.get(PathUtil.getJarPathForClass(Empty.getClass)).toFile)
 
 
 }
