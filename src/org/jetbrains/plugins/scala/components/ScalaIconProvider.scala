@@ -8,6 +8,7 @@ import com.intellij.ide.IconProvider
 import lang.psi.api.ScalaFile
 import org.jetbrains.annotations.Nullable
 import com.intellij.openapi.progress.ProgressManager
+import org.jetbrains.plugins.scala.lang.psi.api.synthetics.language.ScamFileType
 
 class ScalaIconProvider extends IconProvider {
   @Nullable
@@ -16,6 +17,7 @@ class ScalaIconProvider extends IconProvider {
     element match {
       case null => null
       case file: ScalaFile =>
+        if (file.getFileType == ScamFileType) return ScamFileType.getIcon
         if (file.isWorksheetFile) return Icons.WORKSHEET_LOGO
         if (file.isScriptFile()) return Icons.SCRIPT_FILE_LOGO
         if (file.getVirtualFile == null) return Icons.SCRIPT_FILE_LOGO

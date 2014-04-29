@@ -860,9 +860,12 @@
                          level="WARNING" enabledByDefault="true" language="Scala" />
         <!-- end of scaladoc inspections -->
         <!-- end of inspections -->
-
+      <fileTypeFactory implementation="org.jetbrains.plugins.scala.lang.psi.api.synthetics.language.ScamFileTypeFactory"/>
     </extensions>
 
+    <extensions defaultExtensionNs="org.intellij.scala">
+      <scalaFileFactory implementation="org.jetbrains.plugins.scala.lang.psi.api.synthetics.language.ScamFileFactory" />
+    </extensions>
 
     <application-components>
         <component>
@@ -931,7 +934,10 @@
             <implementation-class>org.jetbrains.plugins.scala.worksheet.actions.WorksheetFileHook</implementation-class>
         </component>
         <component>
-            <implementation-class>org.jetbrains.plugins.scala.worksheet.interactive.WorksheetAutoRunner</implementation-class>
+          <implementation-class>org.jetbrains.plugins.scala.worksheet.interactive.WorksheetAutoRunner</implementation-class>
+        </component>
+        <component>
+          <implementation-class>org.jetbrains.plugins.scala.lang.psi.api.synthetics.language.SyntheticsProjectComponent</implementation-class>
         </component>
     </project-components>
 
@@ -1022,6 +1028,13 @@
         </action>
         <action id="Scala.CopyWorksheet" class="org.jetbrains.plugins.scala.worksheet.actions.CopyWorksheetAction"
                 text="Copy Scala Worksheet" description="Copy Scala Worksheet">
+        </action>
+        <action id="Scala.RunScamScript" class="org.jetbrains.plugins.scala.lang.psi.api.synthetics.actions.RunScriptAction"
+                text="Run Scam script" description="Run Scam Script">
+          <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
+        </action>
+        <action id="Scala.StopScripts" class="org.jetbrains.plugins.scala.lang.psi.api.synthetics.actions.StopScriptsAction"
+                text="Stop Scam scripts" description="Stop scam scripts">
         </action>
         <action id="Scala.GenerateEquals"
                 class="org.jetbrains.plugins.scala.codeInsight.generation.ScalaGenerateEqualsAction" text="equals() and hashCode()"
