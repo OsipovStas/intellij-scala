@@ -9,3 +9,4 @@ trait Variable extends Member {
   override def asVariable: Variable = this
   override def isVariable: Boolean = true
 }
+

@@ -9,3 +9,4 @@ trait Value extends Member  {
   override def asValue: Value = this
   override def isValue: Boolean = true
 }
+

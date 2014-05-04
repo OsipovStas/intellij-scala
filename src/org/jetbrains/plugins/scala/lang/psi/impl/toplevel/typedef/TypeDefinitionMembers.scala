@@ -26,6 +26,8 @@ import api.toplevel.{ScNamedElement, ScModifierListOwner, ScTypedDefinition}
 import api.base.{ScAccessModifier, ScFieldId, ScPrimaryConstructor}
 import extensions.toPsiNamedElementExt
 import caches.CachesUtil.MyOptionalProvider
+import org.jetbrains.plugins.scala.lang.psi.api.synthetics.base.ScSyntheticOwner
+import org.jetbrains.plugins.scala.lang.psi.api.synthetics.SyntheticUtil.SyntheticSignature
 
 /**
  * @author ven
@@ -415,6 +417,10 @@ object TypeDefinitionMembers {
             addSignature(new Signature(o.name, Stream.empty, 0, subst, o))
           case _ =>
         }
+        member match {
+          case owner: ScSyntheticOwner => owner.getSyntheticSignatures.foreach(addSignature)
+          case _ =>
+        }
       }
 
       template match {
@@ -715,6 +721,15 @@ object TypeDefinitionMembers {
             case _ => if (!tail) return false
           }
           def tail: Boolean = {
+            signature match {
+              case siga @ SyntheticSignature(method, _, member) if checkName(method.name) =>
+                member.getFake(siga).foreach {
+                  case fake =>
+                    if (processValsForScala && !processor.execute(fake,
+                      state.put(ScSubstitutor.key, n.substitutor followed subst))) return false
+                }
+              case _ =>
+            }
             if (processValsForScala && checkName(elem.name) &&
               !processor.execute(elem, state.put(ScSubstitutor.key, n.substitutor followed subst))) return false
 

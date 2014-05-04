@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.scala.dsl.tree
 
-import org.jetbrains.plugins.scala.dsl.{Context, TypeContext}
+import org.jetbrains.plugins.scala.dsl.types.{Context, ScalaType, Type}
 
 /**
  * @author stasstels
@@ -8,7 +8,7 @@ import org.jetbrains.plugins.scala.dsl.{Context, TypeContext}
  */
 trait Member extends AnnotationHolder with Named {
 
-  override def hasAnnotation(a: Annotation): Boolean = false
+  override def hasAnnotation(a: Annotation)(implicit ctx: Context): Boolean = false
 
   def isValue: Boolean = false
 
@@ -20,9 +20,18 @@ trait Member extends AnnotationHolder with Named {
 
   def containingClass: ScalaClass
 
-  def typecheck(p: TypeContext => Boolean): Member = this
+  def getType: Type = new Type {
+    override def apply(v1: TypedMember): ScalaType = v1.getScalaType
+  }
+
 }
 
+
+trait TypedMember extends Member {
+
+  def getScalaType: ScalaType
+
+}
 
 object Member {
   implicit def none2empty(t: None.type): Empty.type = Empty
@@ -36,5 +45,6 @@ object Member {
   def fromContext(implicit ctx: Context): Member = {
     ctx.member
   }
+
 
 }

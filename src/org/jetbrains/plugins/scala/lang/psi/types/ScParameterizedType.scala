@@ -16,12 +16,16 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi._
 import result.{Success, TypingContext}
 import api.toplevel.typedef.{ScTypeDefinition, ScClass}
-import collection.mutable.ArrayBuffer
 import extensions.{toPsiNamedElementExt, toPsiClassExt}
 import collection.immutable.{HashSet, ListMap, Map}
 import org.jetbrains.plugins.scala.lang.psi.types.Conformance.AliasType
+import org.jetbrains.plugins.scala.dsl.types.{ParametrizedType, ScalaType}
+import org.jetbrains.plugins.scala.dsl.types.Types.Array_
 
 case class JavaArrayType(arg: ScType) extends ValueType {
+
+
+  override def asScalaType: ScalaType = Array_(arg.asScalaType)
 
   def getParameterizedType(project: Project, scope: GlobalSearchScope): Option[ScType] = {
     val arrayClasses = ScalaPsiManager.instance(project).getCachedClasses(scope, "scala.Array")
@@ -84,6 +88,10 @@ case class JavaArrayType(arg: ScType) extends ValueType {
 }
 
 case class ScParameterizedType(designator : ScType, typeArgs : Seq[ScType]) extends ValueType {
+
+
+  override def asScalaType: ScalaType = ParametrizedType(designator.asScalaType, typeArgs.map(_.asScalaType))
+
   override protected def isAliasTypeInner: Option[AliasType] = {
     this match {
       case ScParameterizedType(ScDesignatorType(ta: ScTypeAlias), args) => {

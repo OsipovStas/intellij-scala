@@ -12,6 +12,8 @@ import collection.mutable
 import org.jetbrains.plugins.scala.lang.psi.types.nonvalue.TypeParameter
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScBindingPattern
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScFieldId
+import org.jetbrains.plugins.scala.dsl.types.{Refinement, CompoundType, ScalaType}
+import org.jetbrains.plugins.scala.lang.psi.api.synthetics.base.DslTypeUtil
 
 /**
  * Substitutor should be meaningful only for decls and typeDecls. Components shouldn't be applied by substitutor.
@@ -20,6 +22,15 @@ case class ScCompoundType(components: Seq[ScType], signatureMap: Map[Signature, 
                           typesMap: Map[String, TypeAliasSignature]) extends ValueType {
   def visitType(visitor: ScalaTypeVisitor) {
     visitor.visitCompoundType(this)
+  }
+
+  override def asScalaType: ScalaType = {
+    val decls = (signatureMap ++ typesMap).flatMap {
+      case (s: Signature, rt: ScType) => DslTypeUtil.createDeclaration(s, rt.asScalaType)
+      case (s: String, sign: TypeAliasSignature) => Seq(DslTypeUtil.createDeclaration(sign))
+      case _ => Seq.empty
+    }.toSeq
+    CompoundType(components.map(_.asScalaType), Refinement(decls))
   }
 
   override def removeAbstracts = ScCompoundType(components.map(_.removeAbstracts),

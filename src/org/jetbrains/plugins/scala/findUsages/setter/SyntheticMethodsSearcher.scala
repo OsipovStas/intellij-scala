@@ -11,6 +11,8 @@ import org.jetbrains.plugins.scala.lang.psi.fake.FakePsiMethod
 import org.jetbrains.plugins.scala.lang.psi.light.PsiTypedDefinitionWrapper
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScReferencePattern
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
+import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScTypedDefinition
+import org.jetbrains.plugins.scala.lang.psi.api.synthetics.base.ScSyntheticOwner
 
 /**
  * @author stasstels
@@ -26,6 +28,18 @@ class SyntheticMethodsSearcher extends QueryExecutor[PsiReference, ReferencesSea
       implicit val consumer = cons
       val element = queryParameters.getElementToSearch
       if (element.isValid) {
+        element match {
+          case typed: ScTypedDefinition =>
+            typed.nameContext match {
+              case owner: ScSyntheticOwner =>
+                owner.getSyntheticSignatures.foreach {
+                  case siga => processSimpleUsages(typed, siga.name)
+                }
+              case _ =>
+            }
+          case _ =>
+        }
+
         element match {
           case fun: ScFunction if fun.name endsWith suffixScala =>
             processSimpleUsages(fun, fun.name)

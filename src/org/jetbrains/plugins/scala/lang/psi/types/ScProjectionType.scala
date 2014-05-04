@@ -21,6 +21,7 @@ import api.base.patterns.ScBindingPattern
 import scala.collection.mutable.ArrayBuffer
 import org.jetbrains.plugins.scala.lang.psi.types.result.Success
 import org.jetbrains.plugins.scala.lang.psi.types.Conformance.AliasType
+import org.jetbrains.plugins.scala.dsl.types.{DesignatorType, ScalaType}
 
 /**
  * @author ilyas
@@ -33,6 +34,10 @@ import org.jetbrains.plugins.scala.lang.psi.types.Conformance.AliasType
  */
 case class ScProjectionType(projected: ScType, element: PsiNamedElement,
                             superReference: Boolean /* todo: find a way to remove it*/) extends ValueType {
+
+
+  override def asScalaType: ScalaType = DesignatorType(presentableText)
+
   override protected def isAliasTypeInner: Option[AliasType] = {
     if (actualElement.isInstanceOf[ScTypeAlias]) {
       actualElement match {
@@ -334,6 +339,10 @@ case class ScThisType(clazz: ScTemplateDefinition) extends ValueType {
  * element can be any stable element, class, value or type alias
  */
 case class ScDesignatorType(element: PsiNamedElement) extends ValueType {
+
+
+  override def asScalaType: ScalaType = DesignatorType(presentableText)
+
   override protected def isAliasTypeInner: Option[AliasType] = {
     element match {
       case ta: ScTypeAlias if ta.typeParameters.length == 0 =>

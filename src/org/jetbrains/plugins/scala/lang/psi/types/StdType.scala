@@ -11,9 +11,14 @@ import impl.ScalaPsiManager
 import extensions.toPsiClassExt
 import api.toplevel.typedef.ScObject
 import scala.Some
+import org.jetbrains.plugins.scala.dsl.types.{StdTypes, ScalaType}
 
 
 abstract class StdType(val name: String, val tSuper: Option[StdType]) extends ValueType {
+
+
+  override def asScalaType: ScalaType = super.asScalaType
+
   def visitType(visitor: ScalaTypeVisitor) {
     visitor.visitStdType(this)
   }
@@ -93,7 +98,9 @@ object StdType {
 }
 
 trait ValueType extends ScType {
+
   def isValue = true
+
 
   def inferValueType: ValueType = this
 }
@@ -104,11 +111,17 @@ case object Null extends StdType("Null", Some(AnyRef))
 
 case object AnyRef extends StdType("AnyRef", Some(Any))
 
-case object Nothing extends StdType("Nothing", Some(Any))
+case object Nothing extends StdType("Nothing", Some(Any)) {
+  override def asScalaType: ScalaType = StdTypes.Nothing
+}
 
 case object Singleton extends StdType("Singleton", Some(AnyRef))
 
 case object AnyVal extends StdType("AnyVal", Some(Any)) {
+
+
+  override def asScalaType: ScalaType = StdTypes.AnyVal
+
   override def getValType: Option[StdType] = Some(this)
 }
 
@@ -133,11 +146,15 @@ object ValType {
 
 object Unit extends ValType("Unit")
 
-object Boolean extends ValType("Boolean")
+object Boolean extends ValType("Boolean") {
+  override def asScalaType: ScalaType = StdTypes.Boolean
+}
 
 object Char extends ValType("Char")
 
-object Int extends ValType("Int")
+object Int extends ValType("Int") {
+  override def asScalaType: ScalaType = StdTypes.Int
+}
 
 object Long extends ValType("Long")
 

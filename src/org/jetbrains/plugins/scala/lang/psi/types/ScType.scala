@@ -20,6 +20,8 @@ import collection.mutable
 import types.Conformance.AliasType
 import scala.annotation.tailrec
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScParameter
+import org.jetbrains.plugins.scala.lang.psi.api.synthetics.base.ScalaTypeLike
+import org.jetbrains.plugins.scala.dsl.types.{SealedType, ScalaType}
 
 /*
 Current types for pattern matching, this approach is bad for many reasons (one of them is bad performance).
@@ -59,7 +61,11 @@ match {
  case ScTypePolymorphicType(internalType, typeParameters) =>
 }
 */
-trait ScType {
+trait ScType extends ScalaTypeLike {
+
+
+  override def asScalaType: ScalaType = SealedType(presentableText)
+
   private var aliasType: Option[AliasType] = null
 
   final def isAliasType: Option[AliasType] = {
