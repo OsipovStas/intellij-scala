@@ -7,7 +7,7 @@ package statements
 import expr.{ScBlock, ScBlockStatement}
 import javax.swing.Icon
 import toplevel.templates.ScExtendsBlock
-import toplevel.{ScTypedDefinition}
+import toplevel.ScTypedDefinition
 import types.ScType
 import toplevel.typedef._
 import base.types.ScTypeElement
@@ -15,12 +15,13 @@ import icons.Icons
 import types.result.{TypingContext, TypeResult}
 import com.intellij.psi.PsiElement
 import lexer.ScalaTokenTypes
+import org.jetbrains.plugins.scala.lang.psi.api.synthetics.base.ScSyntheticOwner
 
 /**
  * @author Alexander Podkhalyuzin
  */
 
-trait ScVariable extends ScBlockStatement with ScMember with ScDocCommentOwner with ScDeclaredElementsHolder with ScAnnotationsHolder {
+trait ScVariable extends ScBlockStatement with ScMember with ScDocCommentOwner with ScDeclaredElementsHolder with ScAnnotationsHolder with ScSyntheticOwner {
   self =>
   def varKeyword = findChildrenByType(ScalaTokenTypes.kVAR).apply(0)
 

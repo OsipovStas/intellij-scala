@@ -5,12 +5,10 @@ import com.intellij.util.{Processor, QueryExecutor}
 import com.intellij.psi.{PsiElement, PsiReference}
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.plugins.scala.extensions._
-import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScVariable, ScFunction}
+import org.jetbrains.plugins.scala.lang.psi.api.statements.ScVariable
 import com.intellij.psi.search.{UsageSearchContext, PsiSearchHelper, TextOccurenceProcessor, SearchScope}
 import org.jetbrains.plugins.scala.lang.psi.fake.FakePsiMethod
 import org.jetbrains.plugins.scala.lang.psi.light.PsiTypedDefinitionWrapper
-import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScReferencePattern
-import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScTypedDefinition
 import org.jetbrains.plugins.scala.lang.psi.api.synthetics.base.ScSyntheticOwner
 
@@ -20,7 +18,6 @@ import org.jetbrains.plugins.scala.lang.psi.api.synthetics.base.ScSyntheticOwner
  */
 
 class SyntheticMethodsSearcher extends QueryExecutor[PsiReference, ReferencesSearch.SearchParameters] {
-  private val suffixScala = "test$$"
 
   def execute(queryParameters: ReferencesSearch.SearchParameters, cons: Processor[PsiReference]): Boolean = {
     inReadAction {
@@ -40,14 +37,11 @@ class SyntheticMethodsSearcher extends QueryExecutor[PsiReference, ReferencesSea
           case _ =>
         }
 
-        element match {
-          case fun: ScFunction if fun.name endsWith suffixScala =>
-            processSimpleUsages(fun, fun.name)
-          case refPattern: ScReferencePattern if ScalaPsiUtil.nameContext(refPattern).isInstanceOf[ScVariable] =>
-            val name = refPattern.name
-            processSimpleUsages(refPattern, name + suffixScala)
-          case _ =>
-        }
+//        element match {
+//          case fun: ScFunction if fun.name endsWith suffixScala =>
+//            processSimpleUsages(fun, fun.name)
+//          case _ =>
+//        }
       }
     }
     true

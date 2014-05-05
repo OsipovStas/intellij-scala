@@ -32,7 +32,7 @@ object SyntheticUtil {
         h <- Member.fromContext
         if h.hasAnnotation(tree.Annotation("TestAnnotation"))
       } {
-        h.asVariable.containingClass.add(Method("fuck$" + h.name.capitalize, Seq(StdTypes.Int), StdTypes.Boolean))
+        h.asVariable.containingClass.add(Method("fuck$" + _.capitalize, Seq(StdTypes.Int), StdTypes.Boolean))
       }
     }
   }
@@ -109,7 +109,7 @@ object SyntheticUtil {
   }
 
   case class SyntheticSignature(methodDef: Method, subst: ScSubstitutor, member: ScSyntheticOwner) extends {
-    val myName = methodDef.name
+    val myName = methodDef.name(member.name)
     val params = ScalaPsiUtil.getTypesStream[Type](methodDef.parameters, (t: Type) => {
       ScalaType2ScType(t(member), member.getContext, member)
     })

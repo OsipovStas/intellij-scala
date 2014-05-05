@@ -10,7 +10,7 @@ import scala.NoSuchElementException
  */
 
 
-sealed trait Type extends ((TypedMember) => ScalaType)
+trait Type extends ((TypedMember) => ScalaType)
 
 trait Context {
 

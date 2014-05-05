@@ -7,12 +7,13 @@ import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScMember
 import scala.annotation.tailrec
 import org.jetbrains.plugins.scala.lang.psi.api.synthetics.SyntheticUtil
 import org.jetbrains.plugins.scala.lang.psi.api.synthetics.SyntheticUtil.SyntheticSignature
+import org.jetbrains.plugins.scala.lang.psi.api.statements.ScDeclaredElementsHolder
 
 /**
  * @author stasstels
  * @since  4/29/14.
  */
-trait ScSyntheticOwner extends ScMember {
+trait ScSyntheticOwner extends ScMember with ScDeclaredElementsHolder {
 
 
   @volatile
@@ -55,5 +56,6 @@ trait ScSyntheticOwner extends ScMember {
     }
   }
 
+  def name = declaredElements.headOption.fold("")(_.getName)
 
 }

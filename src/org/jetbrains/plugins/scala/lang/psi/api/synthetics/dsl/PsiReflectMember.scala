@@ -25,7 +25,7 @@ abstract class PsiReflectMember(m: ScMember
 
   override def containingClass: ScalaClass = PsiReflectScalaClass(m.containingClass)
 
-  override def name: String = m.declaredElements.headOption.fold("")(_.getName)
+  def name: String = m.declaredElements.headOption.fold("")(_.getName)
 
 }
 

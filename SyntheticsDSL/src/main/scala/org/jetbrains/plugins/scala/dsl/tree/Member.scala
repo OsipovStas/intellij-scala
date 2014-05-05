@@ -6,7 +6,7 @@ import org.jetbrains.plugins.scala.dsl.types.{Context, ScalaType, Type}
  * @author stasstels
  * @since  4/29/14.
  */
-trait Member extends AnnotationHolder with Named {
+trait Member extends AnnotationHolder  {
 
   override def hasAnnotation(a: Annotation)(implicit ctx: Context): Boolean = false
 

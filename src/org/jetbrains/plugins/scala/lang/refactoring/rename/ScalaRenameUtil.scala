@@ -9,7 +9,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScObject, ScTy
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.PsiTreeUtil
 import lang.psi.api.toplevel.imports.ScImportStmt
-import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScVariable, ScFunction}
+import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScNewTemplateDefinition
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
 import com.intellij.usageView.UsageInfo
@@ -21,6 +21,7 @@ import org.jetbrains.plugins.scala.lang.psi.fake.FakePsiMethod
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScReferencePattern
 import com.intellij.psi.search.searches.ReferencesSearch
 import scala.collection.JavaConversions._
+import org.jetbrains.plugins.scala.lang.psi.api.synthetics.base.ScSyntheticOwner
 
 object ScalaRenameUtil {
   def filterAliasedReferences(allReferences: util.Collection[PsiReference]): util.ArrayList[PsiReference] = {
@@ -167,12 +168,11 @@ object ScalaRenameUtil {
     }
 
 
-
     val synths = namedElement match {
       case (v: ScReferencePattern) =>
         ScalaPsiUtil.nameContext(v) match {
-          case varDef: ScVariable =>
-            def funcs: Map[String, String => String] = Seq((s: String) => s + "test$$").groupBy {
+          case owner: ScSyntheticOwner =>
+            def funcs: Map[String, String => String] = owner.getSyntheticSignatures.map(_.methodDef.name).groupBy {
               case f => f(v.getName)
             }.map(e => (e._1, e._2.head))
             encoded.flatMap(modifySynthetic(funcs))
@@ -180,21 +180,11 @@ object ScalaRenameUtil {
         }
       case _ => Seq()
     }
-    synths
-
-    //    val synths = ScalaPsiUtil.nameContext(namedElement.asInstanceOf[PsiNamedElement]) match {
-    //      case v: ScVariable => encoded.flatMap(modifySynthetic(funcs))
-    //      case _ => encoded
-    //    }
     (modified ++ synths).foreach {
       case UsagesWithName(name, usagez) if usagez.nonEmpty =>
         RenameUtil.doRenameGenericNamedElement(namedElement, name, usagez, listener)
       case _ =>
     }
-
-
-
-    //to guarantee correct name of namedElement itself
     RenameUtil.doRenameGenericNamedElement(namedElement, newName, Array.empty[UsageInfo], listener)
   }
 

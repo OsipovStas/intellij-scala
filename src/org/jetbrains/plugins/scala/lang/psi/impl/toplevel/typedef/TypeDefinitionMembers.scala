@@ -722,7 +722,7 @@ object TypeDefinitionMembers {
           }
           def tail: Boolean = {
             signature match {
-              case siga @ SyntheticSignature(method, _, member) if checkName(method.name) =>
+              case siga @ SyntheticSignature(method, _, member) if checkName(method.name(member.name)) =>
                 member.getFake(siga).foreach {
                   case fake =>
                     if (processValsForScala && !processor.execute(fake,
@@ -733,16 +733,11 @@ object TypeDefinitionMembers {
             if (processValsForScala && checkName(elem.name) &&
               !processor.execute(elem, state.put(ScSubstitutor.key, n.substitutor followed subst))) return false
 
-            if (name == null || name.isEmpty || checkName(s"${elem.name}_=") || checkName(s"${elem.name}test" + "$$")) {
+            if (name == null || name.isEmpty || checkName(s"${elem.name}_=")) {
               elem match {
                 case t: ScTypedDefinition if t.isVar && signature.name.endsWith("_=") =>
                   if (processValsForScala && !processor.execute(t.getUnderEqualsMethod,
                     state.put(ScSubstitutor.key, n.substitutor followed subst))) return false
-
-                case t: ScTypedDefinition if t.isVar && signature.name.endsWith("test$$") =>
-                  if (processValsForScala && !processor.execute(t.testing$$Method,
-                    state.put(ScSubstitutor.key, n.substitutor followed subst))) return false
-
                 case _ =>
               }
             }

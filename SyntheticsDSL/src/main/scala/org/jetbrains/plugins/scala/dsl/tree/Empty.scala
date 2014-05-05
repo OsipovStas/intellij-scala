@@ -17,8 +17,6 @@ object Empty extends Value with Variable with ScalaClass  with TypedMember {
 
   override def getScalaType: ScalaType = StdTypes.Nothing
 
-  override def name: String = null
-
   override def containingClass: ScalaClass = this
 
   override def hasAnnotation(a: Annotation)(implicit ctx: Context): Boolean = false
