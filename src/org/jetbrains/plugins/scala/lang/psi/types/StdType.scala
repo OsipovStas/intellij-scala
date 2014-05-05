@@ -112,7 +112,7 @@ case object Null extends StdType("Null", Some(AnyRef))
 case object AnyRef extends StdType("AnyRef", Some(Any))
 
 case object Nothing extends StdType("Nothing", Some(Any)) {
-  override def asScalaType: ScalaType = StdTypes.Nothing
+  override def asScalaType: ScalaType = StdTypes.Nothing_
 }
 
 case object Singleton extends StdType("Singleton", Some(AnyRef))
@@ -120,7 +120,7 @@ case object Singleton extends StdType("Singleton", Some(AnyRef))
 case object AnyVal extends StdType("AnyVal", Some(Any)) {
 
 
-  override def asScalaType: ScalaType = StdTypes.AnyVal
+  override def asScalaType: ScalaType = StdTypes.AnyVal_
 
   override def getValType: Option[StdType] = Some(this)
 }
@@ -144,24 +144,38 @@ object ValType {
   def unapply(tp: ValType): Option[String] = Some(tp.name)
 }
 
-object Unit extends ValType("Unit")
+object Unit extends ValType("Unit") {
+  override def asScalaType: ScalaType = StdTypes.Unit_
+}
 
 object Boolean extends ValType("Boolean") {
-  override def asScalaType: ScalaType = StdTypes.Boolean
+  override def asScalaType: ScalaType = StdTypes.Boolean_
 }
 
-object Char extends ValType("Char")
+object Char extends ValType("Char") {
+  override def asScalaType: ScalaType = StdTypes.Char_
+}
 
 object Int extends ValType("Int") {
-  override def asScalaType: ScalaType = StdTypes.Int
+  override def asScalaType: ScalaType = StdTypes.Int_
 }
 
-object Long extends ValType("Long")
+object Long extends ValType("Long") {
+  override def asScalaType: ScalaType = StdTypes.Long_
+}
 
-object Float extends ValType("Float")
+object Float extends ValType("Float") {
+  override def asScalaType: ScalaType = StdTypes.Float_
+}
 
-object Double extends ValType("Double")
+object Double extends ValType("Double") {
+  override def asScalaType: ScalaType = StdTypes.Double_
+}
 
-object Byte extends ValType("Byte")
+object Byte extends ValType("Byte") {
+  override def asScalaType: ScalaType = StdTypes.Byte_
+}
 
-object Short extends ValType("Short")
+object Short extends ValType("Short") {
+  override def asScalaType: ScalaType = StdTypes.Short_
+}

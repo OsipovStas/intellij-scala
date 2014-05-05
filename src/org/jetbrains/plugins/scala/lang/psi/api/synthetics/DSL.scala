@@ -26,5 +26,5 @@ object DSL {
 
   lazy val dslJarUrl = VfsUtil.getUrlForLibraryRoot(Paths.get(PathUtil.getJarPathForClass(Empty.getClass)).toFile)
 
-
+  val SCAM_MARKER = "_$SCAM$_"
 }

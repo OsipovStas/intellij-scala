@@ -30,7 +30,7 @@ case class Var(name: String, rt: ScalaType) extends Declaration("var") {
   override def show: String = s"$kind $name: ${rt.show}"
 }
 
-case class TypeDeclaration(name: String, params: Seq[TypeParameter], lower: ScalaType = StdTypes.Nothing, upper: ScalaType = StdTypes.Any) extends Declaration("type") {
+case class TypeDeclaration(name: String, params: Seq[TypeParameter], lower: ScalaType = StdTypes.Nothing_, upper: ScalaType = StdTypes.Any_) extends Declaration("type") {
   override def show: String = {
     val paramText = if (params.nonEmpty) params.map(_.show).mkString("[", ",", "]") else ""
     s"$kind $name$paramText >: ${lower.show}  <: ${upper.show}"

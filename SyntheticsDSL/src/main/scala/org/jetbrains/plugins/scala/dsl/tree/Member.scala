@@ -1,12 +1,14 @@
 package org.jetbrains.plugins.scala.dsl.tree
 
-import org.jetbrains.plugins.scala.dsl.types.{Context, ScalaType, Type}
+import org.jetbrains.plugins.scala.dsl.types.{Context, ScalaType}
 
 /**
  * @author stasstels
  * @since  4/29/14.
  */
-trait Member extends AnnotationHolder  {
+trait Member extends AnnotationHolder {
+
+  type Type = ((TypedMember) => ScalaType)
 
   override def hasAnnotation(a: Annotation)(implicit ctx: Context): Boolean = false
 

@@ -15,7 +15,7 @@ object Empty extends Value with Variable with ScalaClass  with TypedMember {
 
   override def add(methods: Seq[Method])(implicit ctx: Context): Unit = {}
 
-  override def getScalaType: ScalaType = StdTypes.Nothing
+  override def getScalaType: ScalaType = StdTypes.Nothing_
 
   override def containingClass: ScalaClass = this
 

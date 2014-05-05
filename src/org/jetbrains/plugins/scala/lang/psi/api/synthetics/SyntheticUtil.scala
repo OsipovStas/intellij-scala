@@ -5,7 +5,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScMember
 import org.jetbrains.plugins.scala.dsl.tree.{Empty, Member, TypedMember, Method}
 import org.jetbrains.plugins.scala.lang.psi.types.{ScType, Signature, ScSubstitutor}
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
-import org.jetbrains.plugins.scala.dsl.types.{StdTypes, Context, ScalaType, Type}
+import org.jetbrains.plugins.scala.dsl.types.{Context, ScalaType}
 import com.intellij.psi.{PsiNamedElement, PsiElement, PsiMethod}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScModifierListOwner
 import org.jetbrains.plugins.scala.lang.psi.types.nonvalue.Parameter
@@ -13,8 +13,9 @@ import org.jetbrains.plugins.scala.lang.psi.fake.FakePsiMethod
 import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScVariable, ScValue, ScDeclaredElementsHolder}
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory
 import org.jetbrains.plugins.scala.lang.psi.api.synthetics.dsl.{PsiReflectTypedVariable, PsiReflectTypedValue, PsiReflectVariable, PsiReflectValue}
-import org.jetbrains.plugins.scala.dsl.tree
 import org.jetbrains.plugins.scala.lang.psi.api.synthetics.base.ScSyntheticOwner
+import org.jetbrains.plugins.scala.dsl.base.ScamScript
+import com.intellij.openapi.util.text
 
 /**
  * @author stasstels
@@ -22,27 +23,27 @@ import org.jetbrains.plugins.scala.lang.psi.api.synthetics.base.ScSyntheticOwner
  */
 object SyntheticUtil {
 
-  trait ScamScript {
-    def run()(implicit ctx: Context): Unit
-  }
+  type Type = ((TypedMember) => ScalaType)
 
-  object test extends ScamScript {
-    override def run()(implicit ctx: Context): Unit = {
-      for{
-        h <- Member.fromContext
-        if h.hasAnnotation(tree.Annotation("TestAnnotation"))
-      } {
-        h.asVariable.containingClass.add(Method("fuck$" + _.capitalize, Seq(StdTypes.Int), StdTypes.Boolean))
-      }
+  def register(script: ScamScript): Unit = {
+    val scriptName = script.getClass.getCanonicalName
+    val scripts = scamScripts.filterNot {
+      case s =>
+        text.StringUtil.equals(s.getClass.getCanonicalName, scriptName)
     }
+    scamScripts = script +: scripts
   }
 
+  def unplug() {
+    scamScripts = baseScripts
+  }
 
   def ScalaType2ScType(st: ScalaType, context: PsiElement, child: PsiElement) = ScalaPsiElementFactory.createTypeFromText(st.show, context, child)
 
 
-  private val scripts: Seq[ScamScript] = Seq(test)
+  private val baseScripts: Seq[ScamScript] = Seq.empty
 
+  private var scamScripts = baseScripts
 
   def scMember2member(m: ScMember): Member = m match {
     case aVal: ScValue => PsiReflectValue(aVal)
@@ -64,7 +65,7 @@ object SyntheticUtil {
 
   def getSignaturesFor(m: ScSyntheticOwner, subst: ScSubstitutor): Seq[SyntheticSignature] = {
     implicit val context = new SyntheticAnalyzerContext(m)
-    scripts.foreach(_.run())
+    scamScripts.foreach(_.run())
     context.methods.map(SyntheticSignature(_, subst, m))
   }
 

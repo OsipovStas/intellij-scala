@@ -2,7 +2,6 @@ package org.jetbrains.plugins.scala.dsl.types
 
 import org.jetbrains.plugins.scala.dsl.tree.{Member, TypedMember}
 import scala.language.implicitConversions
-import scala.NoSuchElementException
 
 /**
  * @author stasstels
@@ -10,9 +9,11 @@ import scala.NoSuchElementException
  */
 
 
-trait Type extends ((TypedMember) => ScalaType)
 
 trait Context {
+
+  type Type = ((TypedMember) => ScalaType)
+
 
   val shouldResolveAnnotation: Boolean
 
@@ -25,20 +26,19 @@ trait Context {
 }
 
 
-sealed trait ScalaType extends Type {
+sealed trait ScalaType extends ((TypedMember) => ScalaType) {
 
 
   override def apply(v1: TypedMember): ScalaType = this
 
   def =:=(that: ScalaType)(implicit ctx: Context): Boolean = ctx.equiv(this, that)
 
-  def <:<(that: ScalaType)(implicit ctx: Context): Boolean = ???
+  def <:<(that: ScalaType)(implicit ctx: Context): Boolean = ctx.conform(this, that)
 
   def show: String
 
   def =>:(st: ScalaType): FunList = new =>:(st, this =>: Nil)
 }
-
 
 
 object StdTypes {
@@ -56,15 +56,31 @@ object StdTypes {
     implicit def std2type(std: StdTypeImpl): ScalaType = std.instance
   }
 
-  object Any extends StdTypeImpl("Any")
+  object Any_ extends StdTypeImpl("scala.Any")
 
-  object AnyVal extends StdTypeImpl("AnyVal")
+  object AnyVal_ extends StdTypeImpl("scala.AnyVal")
 
-  object Nothing extends StdTypeImpl("Nothing")
+  object Nothing_ extends StdTypeImpl("scala.Nothing")
 
-  object Int extends StdTypeImpl("Int")
+  object Int_ extends StdTypeImpl("Int")
 
-  object Boolean extends StdTypeImpl("Boolean")
+  object Long_ extends StdTypeImpl("scala.Long")
+
+  object Boolean_ extends StdTypeImpl("scala.Boolean")
+
+  object Byte_ extends StdTypeImpl("scala.Byte")
+
+  object Short_ extends StdTypeImpl("scala.Short")
+
+  object Double_ extends StdTypeImpl("scala.Double")
+
+  object Float_ extends StdTypeImpl("scala.Float")
+
+  object Unit_ extends StdTypeImpl("scala.Unit")
+
+  object Char_ extends StdTypeImpl("scala.Char")
+
+  object String_ extends StdTypeImpl("String")
 
 }
 
@@ -83,6 +99,8 @@ object DesignatorType {
       case _ => None
     }
   }
+
+
 }
 
 object ParametrizedType {
@@ -103,12 +121,12 @@ object ParametrizedType {
   }
 
 
-
 }
 
 sealed abstract class SugarType(val designator: ScalaType)
 
 object Types {
+
 
   object Seq_ extends SugarType(DesignatorType("scala.Seq")) {
     def apply(st: ScalaType): ScalaType = ParametrizedType(designator, Seq(st))
@@ -131,52 +149,6 @@ object Types {
   }
 
 }
-
-sealed abstract class FunList extends Iterable[ScalaType] {
-
-  def h: ScalaType
-
-  def t: FunList
-
-  def isEmpty: Boolean
-
-  def =>:(x: ScalaType) = new =>:(x, this)
-
-
-  override def iterator: Iterator[ScalaType] = new Iterator[ScalaType] {
-    override def hasNext: Boolean = !isEmpty
-
-    override def next(): ScalaType = h
-  }
-
-}
-
-case object Nil extends FunList {
-
-  override def h: ScalaType = throw new NoSuchElementException
-
-  override def t: FunList = throw new NoSuchElementException
-
-  override def isEmpty: Boolean = true
-}
-
-case class =>:(h: ScalaType, t: FunList) extends FunList {
-  override def isEmpty: Boolean = false
-}
-
-object FunList {
-
-  implicit def list2type(xs: FunList): ScalaType = {
-    val types = xs.toList
-    val designatorType = DesignatorType(s"scala.Function${types.length - 1}")
-    ParametrizedType(designatorType, types)
-  }
-
-
-}
-
-
-
 
 
 object CompoundType {
