@@ -16,12 +16,13 @@ import icons.Icons
 import types.result.{TypeResult, TypingContext, Success}
 import com.intellij.psi.PsiElement
 import lexer.ScalaTokenTypes
+import org.jetbrains.plugins.scala.lang.psi.api.synthetics.base.ScSyntheticOwner
 
 /**
  * @author Alexander Podkhalyuzin
  */
 
-trait ScValue extends ScBlockStatement with ScMember with ScDocCommentOwner with ScDeclaredElementsHolder with ScAnnotationsHolder {
+trait ScValue extends ScBlockStatement with ScMember with ScDocCommentOwner with ScDeclaredElementsHolder with ScAnnotationsHolder with ScSyntheticOwner {
   self =>
   def valKeyword = findChildrenByType(ScalaTokenTypes.kVAL).apply(0)
 

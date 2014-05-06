@@ -13,7 +13,7 @@ import org.jetbrains.plugins.scala.lang.psi.fake.FakePsiMethod
 import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScVariable, ScValue, ScDeclaredElementsHolder}
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory
 import org.jetbrains.plugins.scala.lang.psi.api.synthetics.dsl.{PsiReflectTypedVariable, PsiReflectTypedValue, PsiReflectVariable, PsiReflectValue}
-import org.jetbrains.plugins.scala.lang.psi.api.synthetics.base.ScSyntheticOwner
+import org.jetbrains.plugins.scala.lang.psi.api.synthetics.base.{BeanScript, ScSyntheticOwner}
 import org.jetbrains.plugins.scala.dsl.base.ScamScript
 import com.intellij.openapi.util.text
 
@@ -41,7 +41,7 @@ object SyntheticUtil {
   def ScalaType2ScType(st: ScalaType, context: PsiElement, child: PsiElement) = ScalaPsiElementFactory.createTypeFromText(st.show, context, child)
 
 
-  private val baseScripts: Seq[ScamScript] = Seq.empty
+  private val baseScripts: Seq[ScamScript] = Seq(BeanScript)
 
   private var scamScripts = baseScripts
 

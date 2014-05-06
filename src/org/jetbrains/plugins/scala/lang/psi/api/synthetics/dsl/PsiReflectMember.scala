@@ -19,7 +19,9 @@ abstract class PsiReflectMember(m: ScMember
     m.hasAnnotation(a.qualifiedName).isDefined
   } else {
     m.annotations.exists {
-      case annot => annot.typeElement.getText.replace(" ", "").endsWith(a.qualifiedName)
+      case annot =>
+        val ann = annot.typeElement.getText.replace(" ", "")
+        ann.endsWith("." + a.qualifiedName) || ann.equals(a.qualifiedName)
     }
   }
 
