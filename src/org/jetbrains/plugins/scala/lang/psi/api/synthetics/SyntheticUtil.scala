@@ -16,6 +16,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.synthetics.dsl.{PsiReflectTypedV
 import org.jetbrains.plugins.scala.lang.psi.api.synthetics.base.{BeanScript, ScSyntheticOwner}
 import org.jetbrains.plugins.scala.dsl.base.ScamScript
 import com.intellij.openapi.util.text
+import com.intellij.psi.util.PsiTreeUtil
 
 /**
  * @author stasstels
@@ -116,8 +117,8 @@ object SyntheticUtil {
     })
     val paramsLength: Int = methodDef.parameters.length
     val named = SyntheticUtil.getNavigator(member) match {
-      case n: PsiNamedElement => Some(n)
-      case _ => None
+      case n: PsiNamedElement => n
+      case _ => PsiTreeUtil.getParentOfType(member, classOf[PsiNamedElement])
     }
   } with Signature(myName, params, paramsLength, subst, named)
 

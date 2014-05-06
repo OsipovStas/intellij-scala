@@ -40,7 +40,7 @@ object DslTypeUtil {
   }
 
   def createDeclaration(siga: Signature, rt: ScalaType) = {
-    siga.namedElement.flatMap {
+    siga.namedElement match {
       case f: ScFunction =>
         Some(Def(f.name, f.paramClauses.clauses.map(_.paramTypes.map(_.asScalaType)).headOption.getOrElse(Seq()), rt))
       case t: ScTypedDefinition =>
