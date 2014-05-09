@@ -37,5 +37,5 @@ class RunScriptAction extends AnAction with TopComponentAction {
   override def actionIcon: Icon = AllIcons.Nodes.PluginRestart
 
 
-  override def bundleKey: String = "annotations.plug.button"
+  override def bundleKey: String = "synthetics.plug.button"
 }

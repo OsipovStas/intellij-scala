@@ -9,7 +9,7 @@ import java.awt.FlowLayout
 import javax.swing.JPanel
 import org.jetbrains.plugins.scala.worksheet.actions.TopComponentAction
 import scala.collection.mutable
-import org.jetbrains.plugins.scala.lang.psi.api.synthetics.actions.{StopScriptsAction, RunScriptAction}
+import org.jetbrains.plugins.scala.lang.psi.api.synthetics.actions.{ScamScriptsWizardAction, StopScriptsAction, RunScriptAction}
 
 /**
  * @author stasstels
@@ -27,7 +27,7 @@ class SyntheticsProjectComponent(project: Project) extends ProjectComponent {
     project.getMessageBus.connect(project).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, SyntheticsEditorListener)
   }
 
-  override def getComponentName: String = "Synthetic Annotations"
+  override def getComponentName: String = "Synthetic definitions"
 
 
   private object SyntheticsEditorListener extends FileEditorManagerListener {
@@ -63,7 +63,7 @@ class SyntheticsProjectComponent(project: Project) extends ProjectComponent {
 
     }
 
-    def buttons: Seq[TopComponentAction] = Seq(new RunScriptAction, new StopScriptsAction)
+    def buttons: Seq[TopComponentAction] = Seq(new ScamScriptsWizardAction, new StopScriptsAction, new RunScriptAction)
 
   }
 

@@ -1038,6 +1038,9 @@
         <action id="Scala.StopScripts" class="org.jetbrains.plugins.scala.lang.psi.api.synthetics.actions.StopScriptsAction"
                 text="Stop Scam scripts" description="Stop scam scripts">
         </action>
+        <action id="Scala.ScamScriptWizard" class="org.jetbrains.plugins.scala.lang.psi.api.synthetics.actions.ScamScriptsWizardAction"
+                text="Configure Scam scripts" description="Configure scam scripts">
+        </action>
         <action id="Scala.GenerateEquals"
                 class="org.jetbrains.plugins.scala.codeInsight.generation.ScalaGenerateEqualsAction" text="equals() and hashCode()"
                 description="Generate equals() and hashCode() methods">
