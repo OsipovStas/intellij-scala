@@ -291,7 +291,9 @@
         <extendWordSelectionHandler implementation="org.jetbrains.plugins.scala.editor.selectioner.ScalaSemicolonSelectioner"/>
         <extendWordSelectionHandler implementation="org.jetbrains.plugins.scala.editor.selectioner.ScalaStatementGroupSelectioner"/>
         <extendWordSelectionHandler implementation="org.jetbrains.plugins.scala.editor.selectioner.ScalaCodeBlockSelectioner"/>
-
+        <resolveScopeProvider implementation="org.jetbrains.plugins.scala.lang.psi.api.synthetics.resolve.ScamScopeProvider"/>
+        <indexedRootsProvider implementation="org.jetbrains.plugins.scala.lang.psi.api.synthetics.resolve.ScamIndexableSetContributor"/>
+        <java.elementFinder implementation="org.jetbrains.plugins.scala.lang.psi.api.synthetics.resolve.ScamClassFinder"/>
         <!--Extensions for class-files treatment-->
         <clsStubBuilderFactory implementation="org.jetbrains.plugins.scala.decompiler.ScClsStubBuilderFactory"/>
         <contentBasedClassFileProcessor implementation="org.jetbrains.plugins.scala.decompiler.ScContentBasedClassFileProcessor" order="first"/>

@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.module.Module
 import org.jetbrains.plugins.scala.util.ScalaLanguageDerivative
+import org.jetbrains.plugins.scala.lang.psi.api.synthetics.resolve.SyntheticResolveUtil
 
 /**
  * User: Alexander Podkhalyuzin
@@ -33,6 +34,6 @@ class ScalaSourceFilterScope(myDelegate: GlobalSearchScope, project: Project) ex
     (null == myDelegate || myDelegate.contains(file)) && (
       (ScalaFileType.SCALA_FILE_TYPE.getDefaultExtension == extention || 
         ScalaLanguageDerivative.hasDerivativeForFileType(file.getFileType)) && myIndex.isInSourceContent(file) ||
-        StdFileTypes.CLASS.getDefaultExtension == extention && myIndex.isInLibraryClasses(file))
+        StdFileTypes.CLASS.getDefaultExtension == extention && (myIndex.isInLibraryClasses(file) || SyntheticResolveUtil.syntheticResolveScope.contains(file)))
   }
 }
