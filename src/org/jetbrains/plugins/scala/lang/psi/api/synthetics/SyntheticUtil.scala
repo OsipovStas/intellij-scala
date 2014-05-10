@@ -6,17 +6,23 @@ import org.jetbrains.plugins.scala.dsl.tree.{Empty, Member, TypedMember, Method}
 import org.jetbrains.plugins.scala.lang.psi.types.{ScType, Signature, ScSubstitutor}
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
 import org.jetbrains.plugins.scala.dsl.types.{Context, ScalaType}
-import com.intellij.psi.{PsiNamedElement, PsiElement, PsiMethod}
+import com.intellij.psi.{PsiManager, PsiNamedElement, PsiElement, PsiMethod}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScModifierListOwner
 import org.jetbrains.plugins.scala.lang.psi.types.nonvalue.Parameter
 import org.jetbrains.plugins.scala.lang.psi.fake.FakePsiMethod
 import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScVariable, ScValue, ScDeclaredElementsHolder}
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory
 import org.jetbrains.plugins.scala.lang.psi.api.synthetics.dsl.{PsiReflectTypedVariable, PsiReflectTypedValue, PsiReflectVariable, PsiReflectValue}
-import org.jetbrains.plugins.scala.lang.psi.api.synthetics.base.{BeanScript, ScSyntheticOwner}
+import org.jetbrains.plugins.scala.lang.psi.api.synthetics.base.ScSyntheticOwner
 import org.jetbrains.plugins.scala.dsl.base.ScamScript
-import com.intellij.openapi.util.text
 import com.intellij.psi.util.PsiTreeUtil
+import org.apache.commons.io.FilenameUtils
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.project.Project
+import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.psi.search.{GlobalSearchScope, FileTypeIndex}
+import org.jetbrains.plugins.scala.lang.psi.api.synthetics.language.{SyntheticsProjectComponent, ScamFileType}
+import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
 
 /**
  * @author stasstels
@@ -26,25 +32,36 @@ object SyntheticUtil {
 
   type Type = ((TypedMember) => ScalaType)
 
-  def register(script: ScamScript): Unit = {
-    val scriptName = script.getClass.getCanonicalName
-    val scripts = scamScripts.filterNot {
-      case s =>
-        text.StringUtil.equals(s.getClass.getCanonicalName, scriptName)
-    }
-    scamScripts = script +: scripts
+  def getScamPsiFile(script: VirtualFile, p: Project) = {
+    Option(PsiManager.getInstance(p).findFile(script))
   }
 
-  def unplug() {
-    scamScripts = baseScripts
+  def register(script: ScamScript, p: Project): Unit = {
+    val component = SyntheticsProjectComponent.getInstance(p)
+    component.register(script)
+  }
+
+  def unplug(p: Project) {
+    SyntheticsProjectComponent.getInstance(p).unplug()
+  }
+
+
+  def findScamScripts(p: Project): Seq[VirtualFile] = {
+    import scala.collection.JavaConversions._
+    val searchScope = GlobalSearchScope.allScope(p)
+    FileBasedIndex.getInstance().getContainingFiles(FileTypeIndex.NAME, ScamFileType, searchScope).toSeq
+  }
+
+  def scamName(file: VirtualFile) = FilenameUtils.removeExtension(file.getName) + DSL.SCAM_MARKER
+
+  def scamName(file: ScalaFile) = FilenameUtils.removeExtension(file.getName) + DSL.SCAM_MARKER
+
+  def isPluged(file: VirtualFile, p: Project) = {
+    SyntheticsProjectComponent.getInstance(p).isPluged(file)
   }
 
   def ScalaType2ScType(st: ScalaType, context: PsiElement, child: PsiElement) = ScalaPsiElementFactory.createTypeFromText(st.show, context, child)
 
-
-  private val baseScripts: Seq[ScamScript] = Seq(BeanScript)
-
-  private var scamScripts = baseScripts
 
   def scMember2member(m: ScMember): Member = m match {
     case aVal: ScValue => PsiReflectValue(aVal)
@@ -66,6 +83,7 @@ object SyntheticUtil {
 
   def getSignaturesFor(m: ScSyntheticOwner, subst: ScSubstitutor): Seq[SyntheticSignature] = {
     implicit val context = new SyntheticAnalyzerContext(m)
+    val scamScripts = SyntheticsProjectComponent.getInstance(m.getProject).scripts
     scamScripts.foreach(_.run())
     context.methods.map(SyntheticSignature(_, subst, m))
   }

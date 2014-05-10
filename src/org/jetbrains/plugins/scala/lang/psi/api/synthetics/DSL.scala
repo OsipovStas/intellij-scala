@@ -7,6 +7,7 @@ import com.intellij.util.PathUtil
 import com.intellij.openapi.vfs.VfsUtil
 import java.nio.file.Paths
 import org.jetbrains.plugins.scala.dsl.tree.Empty
+import com.intellij.openapi.util.io.FileUtil
 
 /**
  * @author stasstels
@@ -27,4 +28,10 @@ object DSL {
   lazy val dslJarUrl = VfsUtil.getUrlForLibraryRoot(Paths.get(PathUtil.getJarPathForClass(Empty.getClass)).toFile)
 
   val SCAM_MARKER = "_$SCAM$_"
+
+  lazy val scamScriptDir = {
+    val dir = Paths.get(Paths.get(PathUtil.getJarPathForClass(Empty.getClass)).getParent.toString, "scams").toFile
+    FileUtil.createDirectory(dir)
+    dir
+  }
 }

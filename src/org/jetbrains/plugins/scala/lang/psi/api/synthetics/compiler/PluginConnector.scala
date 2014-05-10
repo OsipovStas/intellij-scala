@@ -16,8 +16,8 @@ import org.jetbrains.plugins.scala.compiler.CompileServerLauncher
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.application.ApplicationManager
 import org.jetbrains.plugins.scala.lang.psi.api.synthetics.compiler.SyntheticCompiler.SyntheticCompilerTask
-import org.jetbrains.plugins.scala.lang.psi.api.synthetics.SyntheticUtil
 import org.jetbrains.plugins.scala.dsl.base.ScamScript
+import org.jetbrains.plugins.scala.lang.psi.api.synthetics.language.SyntheticsProjectComponent
 
 /**
  * @author stasstels
@@ -25,9 +25,9 @@ import org.jetbrains.plugins.scala.dsl.base.ScamScript
  */
 class PluginConnector(template: ScalaFile) {
 
-  val task = new CompilerTask(template.getProject, "Load Scam Script", false, false, false, false)
+  lazy val task = new CompilerTask(template.getProject, "Load Scam Script", false, false, false, false)
 
-  val client = new TaskClientAdapter(task) {
+  lazy val client = new TaskClientAdapter(task) {
     override def compilationEnd(): Unit = if (!hasErrors) load()
   }
 
@@ -47,7 +47,7 @@ class PluginConnector(template: ScalaFile) {
             case name =>
               ScamScriptFactory.newInstance(name, CompilerParameters.getClasspath(template.getProject) :+ SyntheticCompiler.out)
           }.foreach {
-            SyntheticUtil.register
+            SyntheticsProjectComponent.getInstance(template.getProject).register
           }
         }
       }

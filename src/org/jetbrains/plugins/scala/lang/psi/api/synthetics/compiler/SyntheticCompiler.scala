@@ -1,10 +1,10 @@
 package org.jetbrains.plugins.scala
 package lang.psi.api.synthetics.compiler
 
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.compiler.progress.CompilerTask
 import org.jetbrains.jps.incremental.scala.Client
 import java.io.File
+import org.jetbrains.plugins.scala.lang.psi.api.synthetics.DSL
 
 /**
  * @author stasstels
@@ -12,7 +12,7 @@ import java.io.File
  */
 object SyntheticCompiler {
 
-  val out = FileUtil.createTempDirectory("scamDir", null, true)
+  def out = DSL.scamScriptDir
 
 
   def runCompileTask(task: SyntheticCompilerTask) {

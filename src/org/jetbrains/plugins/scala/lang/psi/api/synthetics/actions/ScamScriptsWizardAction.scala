@@ -6,7 +6,11 @@ import org.jetbrains.plugins.scala.worksheet.actions.TopComponentAction
 import javax.swing.Icon
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ApplicationManager
-import org.jetbrains.plugins.scala.lang.psi.api.synthetics.ui.ScamScriptsWizard
+import org.jetbrains.plugins.scala.lang.psi.api.synthetics.ui.{ScamScriptDescriptor, ScamScriptsWizard}
+import org.jetbrains.plugins.scala.lang.psi.api.synthetics.SyntheticUtil
+import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
+import org.jetbrains.plugins.scala.lang.psi.api.synthetics.compiler.PluginConnector
+import org.jetbrains.plugins.scala.lang.psi.api.synthetics.language.SyntheticsProjectComponent
 
 /**
  * @author stasstels
@@ -17,7 +21,23 @@ class ScamScriptsWizardAction extends AnAction with TopComponentAction {
     ApplicationManager.getApplication.invokeLater {
       new Runnable {
         override def run(): Unit = {
-          new ScamScriptsWizard(e.getProject).show()
+          val project = e.getProject
+          val component = SyntheticsProjectComponent.getInstance(project)
+          val wizard = new ScamScriptsWizard(project)
+          if (wizard.showAndGet()) {
+            wizard.enabledScripts.foreach {
+              case ScamScriptDescriptor(script, _)  =>
+                SyntheticUtil.getScamPsiFile(script, project).foreach {
+                  case psi: ScalaFile => new PluginConnector(psi).load()
+                  case _ =>
+                }
+            }
+            wizard.disabledScripts.foreach {
+              case desc =>
+                component.unplug(SyntheticUtil.scamName(desc.script))
+            }
+
+          }
         }
       }
     }
