@@ -8,8 +8,9 @@ import org.jetbrains.plugins.scala.dsl.types.{StdTypes, ScalaType, Context}
  */
 
 
-object Empty extends Value with Variable with ScalaClass  with TypedMember {
+object Empty extends Value with Variable with ScalaClass with ScalaObject with TypedMember {
 
+  override def companion: ScalaObject = this
 
   override def members: Seq[Member] = Seq.empty
 

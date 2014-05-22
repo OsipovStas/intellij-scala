@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.scala
 package lang.psi.api.synthetics
 
-import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScTemplateDefinition, ScMember}
+import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScObject, ScTemplateDefinition, ScMember}
 import org.jetbrains.plugins.scala.dsl.tree.{Empty, Member, TypedMember}
 import org.jetbrains.plugins.scala.lang.psi.types.ScType
 import org.jetbrains.plugins.scala.dsl.types.ScalaType
@@ -48,6 +48,7 @@ object SyntheticUtil {
   }
 
   def stubContexts(owner: ScSyntheticOwner): Seq[SignatureStubContext] = owner match {
+    case obj: ScObject => Seq(new TemplateContext(obj))
     case template: ScTemplateDefinition => Seq(new TemplateContext(template))
     case _ => Seq.empty
   }

@@ -21,10 +21,7 @@ trait Context {
 }
 
 
-sealed trait ScalaType extends ((TypedMember) => ScalaType) {
-
-
-  override def apply(v1: TypedMember): ScalaType = this
+sealed trait ScalaType  {
 
   def =:=(that: ScalaType)(implicit ctx: Context): Boolean = ctx.equiv(this, that)
 
@@ -33,6 +30,12 @@ sealed trait ScalaType extends ((TypedMember) => ScalaType) {
   def show: String
 
   def =>:(st: ScalaType): FunList = new =>:(st, this =>: Nil)
+}
+
+object ScalaType {
+
+  implicit def asFunction(st: ScalaType): ((TypedMember) => ScalaType) = _ => st
+
 }
 
 
@@ -49,6 +52,9 @@ object StdTypes {
 
   object StdTypeImpl {
     implicit def std2type(std: StdTypeImpl): ScalaType = std.instance
+
+    implicit def std2fun(std: StdTypeImpl): ((TypedMember) => ScalaType) = _ => std.instance
+
   }
 
   object Any_ extends StdTypeImpl("scala.Any")

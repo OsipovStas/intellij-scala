@@ -14,6 +14,12 @@ trait Template {
 
   def add(ms: Seq[Method])(implicit ctx: Context): Unit = ms.foreach(add)
 
+  def +=(m: Method)(implicit ctx: Context): Unit = add(m)
+
+  def ++=(ms: Seq[Method])(implicit ctx: Context):Unit = add(ms)
+
+  def companion: Template
+
 }
 
 object Template {
@@ -25,3 +31,4 @@ object Template {
 
 trait ScalaClass extends Template
 
+trait ScalaObject extends Template

@@ -9,7 +9,7 @@ import base.ScPrimaryConstructor
 import impl.ScalaPsiElementFactory
 import lexer.ScalaTokenTypes
 import com.intellij.psi.{PsiMethod, PsiElement}
-import statements.params.{ScParameterClause, ScParameters}
+import statements.params.ScParameters
 import statements.{ScFunction, ScFunctionDefinition, ScParameterOwner}
 import caches.CachesUtil
 import com.intellij.psi.util.PsiModificationTracker
@@ -20,7 +20,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.base.types.{ScTupleTypeElement, 
 * Date: 20.02.2008
 */
 
-trait ScClass extends ScTypeDefinition with ScParameterOwner {
+trait ScClass extends ScTypeDefinition with ScParameterOwner  {
   def constructor: Option[ScPrimaryConstructor]
 
   def secondaryConstructors: Seq[ScFunction] = {
