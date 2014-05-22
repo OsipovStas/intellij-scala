@@ -8,8 +8,6 @@ import org.jetbrains.plugins.scala.dsl.types.{Context, ScalaType}
  */
 trait Member extends AnnotationHolder {
 
-  type Type = ((TypedMember) => ScalaType)
-
   override def hasAnnotation(a: Annotation)(implicit ctx: Context): Boolean = false
 
   def isValue: Boolean = false
@@ -20,11 +18,7 @@ trait Member extends AnnotationHolder {
 
   def asVariable: Variable = None
 
-  def containingClass: ScalaClass
-
-  def getType: Type = new Type {
-    override def apply(v1: TypedMember): ScalaType = v1.getScalaType
-  }
+  def containingClass: Template
 
 }
 
@@ -44,8 +38,8 @@ object Member {
     case _ => Some(h)
   }
 
-  def fromContext(implicit ctx: Context): Member = {
-    ctx.member
+  def fromContext(implicit ctx: Context): Seq[Member] = {
+    ctx.template.members
   }
 
 

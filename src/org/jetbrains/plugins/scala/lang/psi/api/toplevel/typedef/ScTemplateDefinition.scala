@@ -26,11 +26,12 @@ import extensions.{toPsiNamedElementExt, toPsiClassExt}
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.scope.processor.MethodsProcessor
 import com.intellij.lang.ASTNode
+import org.jetbrains.plugins.scala.lang.psi.api.synthetics.base.ScSyntheticOwner
 
 /**
  * @author ven
  */
-trait ScTemplateDefinition extends ScNamedElement with PsiClass {
+trait ScTemplateDefinition extends ScNamedElement with PsiClass with ScSyntheticOwner {
   import com.intellij.psi.PsiMethod
   def qualifiedName: String = null
 

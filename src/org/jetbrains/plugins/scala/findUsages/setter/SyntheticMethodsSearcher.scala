@@ -2,15 +2,13 @@ package org.jetbrains.plugins.scala
 package findUsages.setter
 
 import com.intellij.util.{Processor, QueryExecutor}
-import com.intellij.psi.{PsiElement, PsiReference}
+import com.intellij.psi.{PsiNamedElement, PsiElement, PsiReference}
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.plugins.scala.extensions._
-import org.jetbrains.plugins.scala.lang.psi.api.statements.ScVariable
 import com.intellij.psi.search.{UsageSearchContext, PsiSearchHelper, TextOccurenceProcessor, SearchScope}
 import org.jetbrains.plugins.scala.lang.psi.fake.FakePsiMethod
 import org.jetbrains.plugins.scala.lang.psi.light.PsiTypedDefinitionWrapper
-import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScTypedDefinition
-import org.jetbrains.plugins.scala.lang.psi.api.synthetics.base.ScSyntheticOwner
+import org.jetbrains.plugins.scala.lang.psi.api.synthetics.SyntheticUtil
 
 /**
  * @author stasstels
@@ -26,14 +24,8 @@ class SyntheticMethodsSearcher extends QueryExecutor[PsiReference, ReferencesSea
       val element = queryParameters.getElementToSearch
       if (element.isValid) {
         element match {
-          case typed: ScTypedDefinition =>
-            typed.nameContext match {
-              case owner: ScSyntheticOwner =>
-                owner.getSyntheticSignatures.foreach {
-                  case siga => processSimpleUsages(typed, siga.name)
-                }
-              case _ =>
-            }
+          case named: PsiNamedElement =>
+            SyntheticUtil.signaturesStubsBy(named).foreach(stub => processSimpleUsages(named, stub.name))
           case _ =>
         }
 

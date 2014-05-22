@@ -11,6 +11,8 @@ import org.jetbrains.plugins.scala.dsl.types.{StdTypes, ScalaType, Context}
 object Empty extends Value with Variable with ScalaClass  with TypedMember {
 
 
+  override def members: Seq[Member] = Seq.empty
+
   override def add(m: Method)(implicit ctx: Context): Unit = {}
 
   override def add(methods: Seq[Method])(implicit ctx: Context): Unit = {}

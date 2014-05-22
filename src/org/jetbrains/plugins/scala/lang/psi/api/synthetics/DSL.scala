@@ -19,6 +19,8 @@ object DSL {
 
   lazy val Icon: Icon = IconLoader.getIcon("/icons/scala_scam_icon_main.png")
 
+  lazy val fakeMethodIcon = IconLoader.getIcon("/icons/fake.png")
+
   val FileExtension: String = "scam"
 
   val FileDescription: String = "Synthetics DSL file"

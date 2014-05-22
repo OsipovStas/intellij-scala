@@ -21,7 +21,8 @@ import org.jetbrains.plugins.scala.lang.psi.fake.FakePsiMethod
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScReferencePattern
 import com.intellij.psi.search.searches.ReferencesSearch
 import scala.collection.JavaConversions._
-import org.jetbrains.plugins.scala.lang.psi.api.synthetics.base.ScSyntheticOwner
+import org.jetbrains.plugins.scala.lang.psi.api.synthetics.SyntheticUtil
+import scala.util.Try
 
 object ScalaRenameUtil {
   def filterAliasedReferences(allReferences: util.Collection[PsiReference]): util.ArrayList[PsiReference] = {
@@ -151,7 +152,7 @@ object ScalaRenameUtil {
       case UsagesWithName(name, usagez) =>
         if (usagez.isEmpty) Nil
         else {
-          val grouped = usagez.groupBy(u => m.getOrElse(u.getElement.getLastChild.getText, identity[String](_)))
+          val grouped = usagez.groupBy(u => m.getOrElse(Try(u.getElement.getLastChild.getText).getOrElse(""), identity[String](_)))
           val seq = grouped.map(entry => UsagesWithName(entry._1(name), entry._2)).filterNot(_.name == newName).toSeq
           seq
         }
@@ -169,17 +170,29 @@ object ScalaRenameUtil {
 
 
     val synths = namedElement match {
-      case (v: ScReferencePattern) =>
-        ScalaPsiUtil.nameContext(v) match {
-          case owner: ScSyntheticOwner =>
-            def funcs: Map[String, String => String] = owner.getSyntheticSignatures.map(_.methodDef.name).groupBy {
-              case f => f(v.getName)
-            }.map(e => (e._1, e._2.head))
-            encoded.flatMap(modifySynthetic(funcs))
-          case _ => Seq()
-        }
+      case named: PsiNamedElement =>
+        val funcs = SyntheticUtil.signaturesStubsBy(named).map(_.method.name).groupBy {
+          case f => f(named.getName)
+        }.map(e => (e._1, e._2.head))
+        encoded.flatMap(modifySynthetic(funcs))
       case _ => Seq()
     }
+
+//    val synths = namedElement match {
+//      case (v: ScReferencePattern) =>
+//        SyntheticUtil.findOwner(v).map {
+//          case owner => owner.syntheticStubs.filter(_.reference.equals(v))
+//        }
+//        ScalaPsiUtil.nameContext(v) match {
+//          case owner: ScSyntheticOwner =>
+//            def funcs: Map[String, String => String] = owner.syntheticStubs.map(_.methodDef.name).groupBy {
+//              case f => f(v.getName)
+//            }.map(e => (e._1, e._2.head))
+//            encoded.flatMap(modifySynthetic(funcs))
+//          case _ => Seq()
+//        }
+//      case _ => Seq()
+//    }
     (modified ++ synths).foreach {
       case UsagesWithName(name, usagez) if usagez.nonEmpty =>
         RenameUtil.doRenameGenericNamedElement(namedElement, name, usagez, listener)

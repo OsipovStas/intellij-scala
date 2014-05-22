@@ -2,25 +2,23 @@ package org.jetbrains.plugins.scala
 package lang.psi.api.synthetics.base
 
 import com.intellij.psi.PsiMethod
-import org.jetbrains.plugins.scala.lang.psi.types._
-import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScMember
 import scala.annotation.tailrec
 import org.jetbrains.plugins.scala.lang.psi.api.synthetics.SyntheticUtil
-import org.jetbrains.plugins.scala.lang.psi.api.synthetics.SyntheticUtil.SyntheticSignature
-import org.jetbrains.plugins.scala.lang.psi.api.statements.ScDeclaredElementsHolder
+import org.jetbrains.plugins.scala.lang.psi.api.synthetics.dsl.{SignatureStub, SyntheticSignature}
+import org.jetbrains.plugins.scala.lang.psi.ScalaPsiElement
 
 /**
  * @author stasstels
  * @since  4/29/14.
  */
-trait ScSyntheticOwner extends ScMember with ScDeclaredElementsHolder {
+trait ScSyntheticOwner extends ScalaPsiElement {
 
 
   @volatile
   private var sigModCount = 0L
 
   @volatile
-  private var signatures: Seq[SyntheticSignature] = null
+  private var signatures: Seq[SignatureStub] = null
 
   @volatile
   private var fakeModCount = 0L
@@ -30,32 +28,30 @@ trait ScSyntheticOwner extends ScMember with ScDeclaredElementsHolder {
 
 
   @tailrec
-  final def getSyntheticSignatures: Seq[SyntheticSignature] = {
+  final def syntheticStubs: Seq[SignatureStub] = {
     val curModCount = getManager.getModificationTracker.getOutOfCodeBlockModificationCount
     if (signatures != null && sigModCount == curModCount) signatures
     else {
-      val res = SyntheticUtil.getSignaturesFor(this, ScSubstitutor.empty)
+      val res = SyntheticUtil.signatureStubs(this)
       sigModCount = curModCount
       signatures = res
-      getSyntheticSignatures
+      syntheticStubs
     }
   }
 
   @tailrec
-  final def getFake(siga: SyntheticSignature): Option[PsiMethod] = {
+  final def fake(siga: SyntheticSignature): Option[PsiMethod] = {
     val curModCount = getManager.getModificationTracker.getOutOfCodeBlockModificationCount
     if (fakes != null && fakeModCount == curModCount) {
       fakes.get(siga.name)
     } else {
-      val map = getSyntheticSignatures.map {
-        case s => (s.name, SyntheticUtil.createFake(s))
+      val map = syntheticStubs.map {
+        case stub => (stub.name, SyntheticUtil.createFake(stub))
       }.toMap
       fakes = map
       fakeModCount = curModCount
-      getFake(siga)
+      fake(siga)
     }
   }
-
-  def name = declaredElements.headOption.fold("")(_.getName)
 
 }

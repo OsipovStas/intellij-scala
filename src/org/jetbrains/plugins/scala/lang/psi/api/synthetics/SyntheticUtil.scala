@@ -1,21 +1,16 @@
 package org.jetbrains.plugins.scala
 package lang.psi.api.synthetics
 
-import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScMember
-import org.jetbrains.plugins.scala.dsl.tree.{Empty, Member, TypedMember, Method}
-import org.jetbrains.plugins.scala.lang.psi.types.{ScType, Signature, ScSubstitutor}
-import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
-import org.jetbrains.plugins.scala.dsl.types.{Context, ScalaType}
-import com.intellij.psi.{PsiManager, PsiNamedElement, PsiElement, PsiMethod}
-import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScModifierListOwner
-import org.jetbrains.plugins.scala.lang.psi.types.nonvalue.Parameter
-import org.jetbrains.plugins.scala.lang.psi.fake.FakePsiMethod
-import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScVariable, ScValue, ScDeclaredElementsHolder}
+import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScTemplateDefinition, ScMember}
+import org.jetbrains.plugins.scala.dsl.tree.{Empty, Member, TypedMember}
+import org.jetbrains.plugins.scala.lang.psi.types.ScType
+import org.jetbrains.plugins.scala.dsl.types.ScalaType
+import com.intellij.psi.{PsiNamedElement, PsiManager, PsiElement, PsiMethod}
+import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScVariable, ScValue}
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory
-import org.jetbrains.plugins.scala.lang.psi.api.synthetics.dsl.{PsiReflectTypedVariable, PsiReflectTypedValue, PsiReflectVariable, PsiReflectValue}
+import org.jetbrains.plugins.scala.lang.psi.api.synthetics.dsl._
 import org.jetbrains.plugins.scala.lang.psi.api.synthetics.base.ScSyntheticOwner
 import org.jetbrains.plugins.scala.dsl.base.ScamScript
-import com.intellij.psi.util.PsiTreeUtil
 import org.apache.commons.io.FilenameUtils
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.project.Project
@@ -23,6 +18,12 @@ import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.psi.search.{GlobalSearchScope, FileTypeIndex}
 import org.jetbrains.plugins.scala.lang.psi.api.synthetics.language.{SyntheticsProjectComponent, ScamFileType}
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
+import org.jetbrains.plugins.scala.lang.psi.types.nonvalue.Parameter
+import org.jetbrains.plugins.scala.lang.psi.api.synthetics.dsl.PsiReflectValue
+import org.jetbrains.plugins.scala.lang.psi.api.synthetics.dsl.PsiReflectVariable
+import extensions.toSeqExt
+import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
+import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScNamedElement
 
 /**
  * @author stasstels
@@ -30,7 +31,27 @@ import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
  */
 object SyntheticUtil {
 
-  type Type = ((TypedMember) => ScalaType)
+
+  def signatureStubs(owner: ScSyntheticOwner): Seq[SignatureStub] = {
+    val scripts = SyntheticsProjectComponent.getInstance(owner.getProject).scripts
+    stubContexts(owner).flatMap {
+      case ctx =>
+        scripts.foreach(_.run()(ctx))
+        ctx.stubs
+    }
+  }
+
+  def signaturesStubsBy(ref: PsiNamedElement): Seq[SignatureStub] = {
+    findOwner(ref).toSeq.flatMap {
+      case owner => owner.syntheticStubs.filter(stub => stub.reference.equals(ref))
+    }
+  }
+
+  def stubContexts(owner: ScSyntheticOwner): Seq[SignatureStubContext] = owner match {
+    case template: ScTemplateDefinition => Seq(new TemplateContext(template))
+    case _ => Seq.empty
+  }
+
 
   def getScamPsiFile(script: VirtualFile, p: Project) = {
     Option(PsiManager.getInstance(p).findFile(script))
@@ -70,74 +91,24 @@ object SyntheticUtil {
   }
 
 
-  def getNavigator(member: ScMember): PsiElement = member match {
-    case d: ScDeclaredElementsHolder => d.declaredElements.headOption.getOrElse(member)
+  implicit def arr2arr(a: Array[ScType]): Array[Parameter] = a.toSeq.mapWithIndex {
+    case (tpe, index) => new Parameter("", None, tpe, false, false, false, index)
+  }.toArray
+
+
+
+  def createFake(stub: SignatureStub): PsiMethod = {
+    ScamFakeMethod(stub)
   }
 
 
-  implicit def member2typed(m: ScMember): TypedMember = m match {
-    case aVal: ScValue => PsiReflectTypedValue(aVal)
-    case aVar: ScVariable => PsiReflectTypedVariable(aVar)
+  def findMember(reference: ScNamedElement): TypedMember = ScalaPsiUtil.nameContext(reference) match {
+    case m: ScMember => PsiReflectMember(m)
     case _ => Empty
   }
 
-  def getSignaturesFor(m: ScSyntheticOwner, subst: ScSubstitutor): Seq[SyntheticSignature] = {
-    implicit val context = new SyntheticAnalyzerContext(m)
-    val scamScripts = SyntheticsProjectComponent.getInstance(m.getProject).scripts
-    scamScripts.foreach(_.run())
-    context.methods.map(SyntheticSignature(_, subst, m))
+  def findOwner(ref: PsiNamedElement): Option[ScSyntheticOwner] = ScalaPsiUtil.nameContext(ref) match {
+    case member: ScMember => Option(member.containingClass)
+    case _ => None
   }
-
-
-  def createFake(siga: SyntheticSignature): PsiMethod = {
-    val hasModifierProperty: String => Boolean = siga.member match {
-      case v: ScModifierListOwner => v.hasModifierProperty
-      case _ => _ => false
-    }
-    import extensions.toSeqExt
-    implicit def arr2arr(a: Array[ScType]): Array[Parameter] = a.toSeq.mapWithIndex {
-      case (tpe, index) => new Parameter("", None, tpe, false, false, false, index)
-    }.toArray
-    val typed = member2typed(siga.member)
-    val rType = ScalaType2ScType(siga.methodDef.returnType(typed), siga.member.getContext, siga.member)
-    val types = siga.methodDef.parameters.map {
-      case t => ScalaType2ScType(t(typed), siga.member.getContext, siga.member)
-    }.toArray
-    new FakePsiMethod(SyntheticUtil.getNavigator(siga.member), siga.name, types, rType, hasModifierProperty)
-  }
-
-
-  class SyntheticAnalyzerContext(m: ScMember) extends Context {
-
-    implicit def ScalaType2ScType(t: ScalaType): ScType = ScalaPsiElementFactory.createTypeFromText(t.show, m.getContext, m)
-
-    override def equiv(st1: ScalaType, st2: ScalaType): Boolean = st1 equiv st2
-
-    override def conform(st1: ScalaType, st2: ScalaType): Boolean = st1 conforms st2
-
-    var methods: Seq[Method] = Seq.empty
-
-
-    override val shouldResolveAnnotation: Boolean = false
-
-    override def member: Member = scMember2member(m)
-
-    def add(m: Method) = {
-      methods = m +: methods
-    }
-
-  }
-
-  case class SyntheticSignature(methodDef: Method, subst: ScSubstitutor, member: ScSyntheticOwner) extends {
-    val myName = methodDef.name(member.name)
-    val params = ScalaPsiUtil.getTypesStream[Type](methodDef.parameters, (t: Type) => {
-      ScalaType2ScType(t(member), member.getContext, member)
-    })
-    val paramsLength: Int = methodDef.parameters.length
-    val named = SyntheticUtil.getNavigator(member) match {
-      case n: PsiNamedElement => n
-      case _ => PsiTreeUtil.getParentOfType(member, classOf[PsiNamedElement])
-    }
-  } with Signature(myName, params, paramsLength, subst, named)
-
 }

@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.scala.dsl.types
 
-import org.jetbrains.plugins.scala.dsl.tree.{Member, TypedMember}
+import org.jetbrains.plugins.scala.dsl.tree.{Template, TypedMember}
 import scala.language.implicitConversions
 
 /**
@@ -12,12 +12,7 @@ import scala.language.implicitConversions
 
 trait Context {
 
-  type Type = ((TypedMember) => ScalaType)
-
-
-  val shouldResolveAnnotation: Boolean
-
-  def member: Member
+  def template: Template
 
   def equiv(st1: ScalaType, st2: ScalaType): Boolean
 
